@@ -78,8 +78,8 @@ ExamFever Simulator is an innovative educational platform that helps students pr
 
 ### 1. Clone and Install
 ```bash
-git clone https://github.com/coleam00/dynamous-kiro-hackathon
-cd dynamous-kiro-hackathon
+git clone https://github.com/Ademileke12/Examfever_kiro.git
+cd Examfever_kiro
 npm install
 ```
 
