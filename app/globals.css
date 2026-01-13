@@ -1,0 +1,665 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-first responsive design */
+@layer base {
+  html {
+    font-size: 16px; /* Base font size for mobile */
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Mobile touch targets - minimum 44px */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile-optimized form inputs */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px;
+  }
+
+  /* Mobile-friendly scrollbars */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
+}
+
+/* Mobile-specific utilities */
+@layer utilities {
+  .mobile-container {
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 100%;
+  }
+
+  .mobile-card {
+    margin: 8px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .mobile-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    min-height: 48px;
+  }
+
+  .mobile-input {
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+    min-height: 48px;
+  }
+
+  .mobile-text-sm {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .mobile-text-base {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .mobile-text-lg {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .mobile-text-xl {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  .mobile-text-2xl {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+
+  .mobile-spacing-xs {
+    margin: 4px;
+    padding: 4px;
+  }
+
+  .mobile-spacing-sm {
+    margin: 8px;
+    padding: 8px;
+  }
+
+  .mobile-spacing-md {
+    margin: 16px;
+    padding: 16px;
+  }
+
+  .mobile-spacing-lg {
+    margin: 24px;
+    padding: 24px;
+  }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 640px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+  }
+  
+  .mobile-center {
+    text-align: center !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* View Transitions API */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@layer base {
+  :root {
+    /* Coursera-inspired Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 210 11% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 11% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 11% 15%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 17% 95%;
+    --secondary-foreground: 210 11% 15%;
+    --muted: 210 17% 95%;
+    --muted-foreground: 210 11% 25%; /* Darker for better contrast */
+    --accent: 210 17% 95%;
+    --accent-foreground: 210 11% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 210 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Coursera-inspired Dark Theme */
+    --background: 210 11% 8%;
+    --foreground: 210 17% 95%;
+    --card: 210 11% 12%;
+    --card-foreground: 210 17% 95%;
+    --popover: 210 11% 12%;
+    --popover-foreground: 210 17% 95%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 210 11% 8%;
+    --secondary: 210 11% 16%;
+    --secondary-foreground: 210 17% 95%;
+    --muted: 210 11% 16%;
+    --muted-foreground: 210 9% 53%;
+    --accent: 210 11% 16%;
+    --accent-foreground: 210 17% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 17% 95%;
+    --success: 142 76% 45%;
+    --success-foreground: 210 11% 8%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 210 11% 8%;
+    --border: 210 11% 16%;
+    --input: 210 11% 16%;
+    --ring: 210 100% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  
+  *:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+}
+
+@layer components {
+  .coursera-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block text-center;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-900 hover:bg-gray-200 px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block text-center;
+  }
+  
+  .btn-outline {
+    @apply border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block text-center;
+  }
+  
+  .nav-item {
+    @apply px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:text-blue-600;
+  }
+  
+  .form-input {
+    @apply w-full px-4 py-3 border border-gray-300 bg-white rounded-lg text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200;
+  }
+  
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full bg-blue-600 transition-all duration-300 ease-out;
+  }
+
+  /* Line clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Glassmorphism utility classes */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-hover {
+    transition: all 0.3s ease;
+  }
+
+  .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .glass-hover:hover {
+    background: rgba(15, 23, 42, 0.15);
+  }
+
+  /* Magnetic button effect */
+  .magnetic {
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* Animated gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Bento card animations */
+  .bento-card {
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .bento-card:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+
+  /* Shadow effects */
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+
+  .shadow-glow-lg {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Particle canvas */
+  .particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Blur navbar */
+  .blur-navbar {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  }
+
+  .dark .blur-navbar {
+    background: rgba(15, 23, 42, 0.8);
+  }
+
+  /* Scanning animation */
+  .scanning-line {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(59, 130, 246, 0.8) 50%, 
+      transparent 100%
+    );
+    animation: scan 2s ease-in-out infinite;
+  }
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  /* Drop zone overlay */
+  .drop-zone-overlay {
+    background: radial-gradient(circle at center, 
+      rgba(59, 130, 246, 0.1) 0%, 
+      rgba(15, 23, 42, 0.9) 70%
+    );
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Shimmer border effect */
+  .shimmer-border {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-border::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(59, 130, 246, 0.4), 
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Letter reveal animation */
+  .letter-reveal {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: letterReveal 0.6s ease forwards;
+  }
+
+  @keyframes letterReveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scroll reveal */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+
+  /* Light mode text contrast fixes */
+  .text-contrast {
+    @apply text-slate-800 dark:text-slate-200;
+  }
+
+  .text-contrast-muted {
+    @apply text-slate-600 dark:text-slate-400;
+  }
+
+  .text-contrast-light {
+    @apply text-slate-500 dark:text-slate-500;
+  }
+
+  /* Better text colors for light mode */
+  .text-readable {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  .text-readable-muted {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+
+  .text-readable-light {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  /* Override problematic slate colors in light mode */
+  .light .text-slate-600 {
+    color: #4b5563 !important; /* gray-600 */
+  }
+
+  .light .text-slate-400 {
+    color: #6b7280 !important; /* gray-500 */
+  }
+
+  .light .text-slate-300 {
+    color: #9ca3af !important; /* gray-400 */
+  }
+
+  /* Ensure proper contrast for all text elements */
+  .light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
+    color: #111827 !important; /* gray-900 */
+  }
+
+  .light p, .light span, .light div {
+    color: inherit;
+  }
+
+  /* Fix muted text in light mode */
+  .light .text-muted-foreground {
+    color: #6b7280 !important; /* gray-500 */
+  }
+}
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  button, a, input, textarea, select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better text sizing for mobile */
+  html {
+    font-size: 16px;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Mobile-friendly form inputs */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better spacing for mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Mobile navigation improvements */
+  .mobile-nav-item {
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+  }
+  
+  /* Improved button sizing for mobile */
+  .mobile-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  /* Better card spacing on mobile */
+  .mobile-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Responsive text sizes */
+  .mobile-text-sm { font-size: 0.875rem; }
+  .mobile-text-base { font-size: 1rem; }
+  .mobile-text-lg { font-size: 1.125rem; }
+  .mobile-text-xl { font-size: 1.25rem; }
+  .mobile-text-2xl { font-size: 1.5rem; }
+  .mobile-text-3xl { font-size: 1.875rem; }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .tablet-text-lg {
+    font-size: 1.125rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .hover-effect:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  button, .clickable {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Better focus states for touch */
+  button:focus, input:focus, textarea:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and shadows */
+  .glass {
+    border-width: 0.5px;
+  }
+  
+  /* Better icon rendering */
+  svg {
+    shape-rendering: geometricPrecision;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce vertical padding in landscape */
+  .landscape-compact {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Smaller navbar in landscape */
+  .navbar-landscape {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Safe area insets for modern mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-inset-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-inset-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
