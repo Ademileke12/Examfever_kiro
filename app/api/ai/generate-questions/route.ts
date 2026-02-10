@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { questionGenerator } from '@/lib/ai/question-generator'
 import { saveQuestions } from '@/lib/database/questions'
 import { QuestionGenerationRequest } from '@/lib/questions/types'
+import { withTimeout, Timeouts, TimeoutError } from '@/lib/security/timeout'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    
+
     // Validate request
     const validationResult = validateGenerationRequest(body)
     if (!validationResult.isValid) {
@@ -20,14 +32,26 @@ export async function POST(request: NextRequest) {
       content: body.content,
       questionTypes: body.questionTypes || ['multiple-choice'],
       difficulty: body.difficulty || ['medium'],
-      maxQuestions: Math.min(body.maxQuestions || 10, 50), // Limit to 50 questions
+      maxQuestions: Math.min(body.maxQuestions || 10, 50),
       topics: body.topics,
-      userId: body.userId || 'anonymous',
+      userId: session.user.id,
       fileId: body.fileId
     }
 
-    // Generate questions
-    const result = await questionGenerator.generateQuestions(generationRequest)
+    // Generate questions with timeout
+    let result
+    try {
+      result = await withTimeout(
+        questionGenerator.generateQuestions(generationRequest),
+        Timeouts.SLOW,
+        'Question generation timed out'
+      )
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        return NextResponse.json({ success: false, error: 'AI generation timed out' }, { status: 504 })
+      }
+      throw error
+    }
 
     if (!result.success) {
       return NextResponse.json(
@@ -37,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save questions to database
-    const saveResult = await saveQuestions(result.questions, generationRequest.userId)
+    const saveResult = await saveQuestions(result.questions, session.user.id)
 
     return NextResponse.json({
       success: true,
@@ -51,12 +75,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Question generation error:', error)
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Generation failed' 
-      },
+      { success: false, error: error instanceof Error ? error.message : 'Generation failed' },
       { status: 500 }
     )
   }

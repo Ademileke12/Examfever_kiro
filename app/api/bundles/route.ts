@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export interface Bundle {
   fileId: string
@@ -19,22 +14,24 @@ export interface Bundle {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const subjectTag = searchParams.get('subjectTag')
-    const search = searchParams.get('search')
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
+
+    const { searchParams } = new URL(request.url)
+    const subjectTag = searchParams.get('subjectTag')
+    const search = searchParams.get('search')
 
     let query = supabase
       .from('question_bundles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', session.user.id)
       .order('last_accessed', { ascending: false, nullsFirst: false })
       .order('upload_date', { ascending: false })
 
@@ -48,9 +45,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query
 
-    if (error) {
-      throw new Error(error.message)
-    }
+    if (error) throw new Error(error.message)
 
     const bundles: Bundle[] = data.map(row => ({
       fileId: row.file_id,
@@ -71,10 +66,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Bundle listing error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch bundles' 
-      },
+      { success: false, error: 'Failed to fetch bundles' },
       { status: 500 }
     )
   }
@@ -82,21 +74,31 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId, bundleName, subjectTag } = await request.json()
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!fileId || !userId || !bundleName) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'File ID, User ID, and Bundle Name are required' },
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { fileId, bundleName, subjectTag } = await request.json()
+
+    if (!fileId || !bundleName) {
+      return NextResponse.json(
+        { success: false, error: 'File ID and Bundle Name are required' },
         { status: 400 }
       )
     }
 
-    // Create or update bundle
+    // Create or update bundle for the authenticated user
     const { data, error } = await supabase
       .from('question_bundles')
       .upsert({
         file_id: fileId,
-        user_id: userId,
+        user_id: session.user.id,
         bundle_name: bundleName,
         subject_tag: subjectTag,
         updated_at: new Date().toISOString()
@@ -104,28 +106,25 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) {
-      throw new Error(error.message)
-    }
+    if (error) throw new Error(error.message)
 
-    // Manually refresh bundle statistics by counting questions
+    // Manually refresh bundle statistics
     try {
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
         .select('difficulty')
         .eq('file_id', fileId)
-        .eq('user_id', userId)
+        .eq('user_id', session.user.id)
 
       if (!questionsError && questionsData) {
         const questionCount = questionsData.length
         const difficultyDistribution: Record<string, number> = {}
-        
+
         questionsData.forEach(q => {
           const difficulty = q.difficulty || 'medium'
           difficultyDistribution[difficulty] = (difficultyDistribution[difficulty] || 0) + 1
         })
 
-        // Update bundle with calculated stats
         await supabase
           .from('question_bundles')
           .update({
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
             difficulty_distribution: difficultyDistribution
           })
           .eq('file_id', fileId)
-          .eq('user_id', userId)
+          .eq('user_id', session.user.id)
       }
     } catch (statsError) {
       console.warn('Failed to update bundle stats:', statsError)
@@ -156,10 +155,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Bundle creation error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create bundle' 
-      },
+      { success: false, error: 'Failed to create bundle' },
       { status: 500 }
     )
   }

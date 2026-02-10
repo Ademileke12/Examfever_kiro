@@ -59,7 +59,7 @@ export async function createMiddlewareSupabaseClient(request: NextRequest) {
   try {
     // Refresh session if expired - required for Server Components
     const { data: { session }, error } = await supabase.auth.getSession()
-    
+
     if (error) {
       console.error('Auth session error:', error)
       // Don't throw here, let the route handle auth failures
@@ -81,9 +81,19 @@ export function isProtectedRoute(pathname: string): boolean {
     '/analytics',
     '/settings',
     '/questions',
-    '/create-exam'
+    '/create-exam',
+    '/api'
   ]
-  
+
+  // Exclude public API routes
+  const publicApiRoutes = [
+    '/api/auth',
+  ]
+
+  if (publicApiRoutes.some(route => pathname.startsWith(route))) {
+    return false
+  }
+
   return protectedRoutes.some(route => pathname.startsWith(route))
 }
 
@@ -94,17 +104,17 @@ export function isAuthRoute(pathname: string): boolean {
     '/forgot-password',
     '/reset-password'
   ]
-  
+
   return authRoutes.some(route => pathname.startsWith(route))
 }
 
 export function getRedirectUrl(request: NextRequest, redirectTo: string): URL {
   const url = new URL(redirectTo, request.url)
-  
+
   // Preserve the original URL as a redirect parameter
   if (redirectTo === '/login') {
     url.searchParams.set('redirectTo', request.nextUrl.pathname)
   }
-  
+
   return url
 }

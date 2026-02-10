@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export interface BundleExamRequest {
-  userId: string
   title: string
   description?: string
   bundleIds: string[]
@@ -20,8 +14,18 @@ export interface BundleExamRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const userId = session.user.id
     const {
-      userId,
       title,
       description,
       bundleIds,
@@ -31,14 +35,14 @@ export async function POST(request: NextRequest) {
       difficultyDistribution
     }: BundleExamRequest = await request.json()
 
-    if (!userId || !title || !bundleIds || bundleIds.length === 0) {
+    if (!title || !bundleIds || bundleIds.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Get bundle information
+    // Get bundle information for the authenticated user
     const { data: bundleData, error: bundleError } = await supabase
       .from('question_bundles')
       .select('*')
@@ -49,26 +53,20 @@ export async function POST(request: NextRequest) {
       throw new Error(bundleError.message)
     }
 
-    // Calculate total questions needed
-    const totalQuestionsNeeded = Object.values(bundleDistribution).reduce((sum, count) => sum + count, 0)
-
     // Select questions from each bundle
     const selectedQuestions: any[] = []
-    const selectedQuestionIds = new Set<string>() // Track selected question IDs to prevent duplicates
-    const bundleSelectionLog: Record<string, { requested: number, available: number, selected: number }> = {}
-    
+    const selectedQuestionIds = new Set<string>()
+
     for (const bundleId of bundleIds) {
       const questionsNeeded = bundleDistribution[bundleId] || 10
-      
-      // Get questions from this bundle
+
       let query = supabase
         .from('questions')
         .select('*')
         .eq('user_id', userId)
         .eq('file_id', bundleId)
-        .limit(questionsNeeded * 3) // Get more than needed for better selection and duplicate avoidance
+        .limit(questionsNeeded * 3)
 
-      // Apply question type filter if specified
       if (questionTypes && questionTypes.length > 0) {
         query = query.in('type', questionTypes)
       }
@@ -79,91 +77,48 @@ export async function POST(request: NextRequest) {
         throw new Error(questionsError.message)
       }
 
-      if (!bundleQuestions || bundleQuestions.length === 0) {
-        bundleSelectionLog[bundleId] = { requested: questionsNeeded, available: 0, selected: 0 }
-        console.warn(`No questions found in bundle ${bundleId}`)
-        continue
-      }
+      if (!bundleQuestions || bundleQuestions.length === 0) continue
 
-      // Filter out already selected questions to prevent duplicates
       const availableQuestions = bundleQuestions.filter(q => !selectedQuestionIds.has(q.id))
-      bundleSelectionLog[bundleId] = { 
-        requested: questionsNeeded, 
-        available: availableQuestions.length, 
-        selected: 0 
-      }
 
-      if (availableQuestions.length === 0) {
-        console.warn(`All questions from bundle ${bundleId} were already selected from other bundles`)
-        continue
-      }
-
-      // Apply difficulty distribution if specified
       let selectedFromBundle: any[] = []
-      
       if (difficultyDistribution && Object.keys(difficultyDistribution).length > 0) {
-        // Select questions based on difficulty distribution
         const totalDifficultyWeight = Object.values(difficultyDistribution).reduce((sum, weight) => sum + weight, 0)
-        
+
         for (const [difficulty, weight] of Object.entries(difficultyDistribution)) {
           const questionsForDifficulty = Math.round((weight / totalDifficultyWeight) * questionsNeeded)
           const difficultyQuestions = availableQuestions
             .filter(q => q.difficulty === difficulty && !selectedQuestionIds.has(q.id))
             .sort(() => Math.random() - 0.5)
             .slice(0, questionsForDifficulty)
-          
+
           selectedFromBundle.push(...difficultyQuestions)
-          // Track selected question IDs
           difficultyQuestions.forEach(q => selectedQuestionIds.add(q.id))
         }
       } else {
-        // Random selection
         selectedFromBundle = availableQuestions
-          .filter(q => !selectedQuestionIds.has(q.id))
           .sort(() => Math.random() - 0.5)
           .slice(0, questionsNeeded)
-        
-        // Track selected question IDs
         selectedFromBundle.forEach(q => selectedQuestionIds.add(q.id))
       }
 
-      bundleSelectionLog[bundleId].selected = selectedFromBundle.length
       selectedQuestions.push(...selectedFromBundle)
     }
 
     if (selectedQuestions.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No questions could be selected from the specified bundles' },
+        { success: false, error: 'No questions could be selected' },
         { status: 400 }
       )
     }
 
-    // Final deduplication step using both ID and content comparison
-    const uniqueQuestions = selectedQuestions.filter((question, index, self) => {
-      // First check by ID
-      const firstOccurrenceById = self.findIndex(q => q.id === question.id)
-      if (firstOccurrenceById !== index) return false
-      
-      // Then check by content to catch any potential duplicates with different IDs
-      const firstOccurrenceByContent = self.findIndex(q => 
-        q.text.trim().toLowerCase() === question.text.trim().toLowerCase() &&
-        q.type === question.type
-      )
-      return firstOccurrenceByContent === index
-    })
-
-    console.log(`Bundle exam creation summary:`)
-    console.log(`- Total questions selected: ${selectedQuestions.length}`)
-    console.log(`- Unique questions after deduplication: ${uniqueQuestions.length}`)
-    console.log(`- Bundle selection details:`, bundleSelectionLog)
-    console.log(`- Duplicates removed: ${selectedQuestions.length - uniqueQuestions.length}`)
-
-    // Use unique questions for exam creation
-    const finalQuestions = uniqueQuestions
+    // Deduplicate
+    const finalQuestions = selectedQuestions.filter((question, index, self) =>
+      self.findIndex(q => q.id === question.id) === index
+    )
 
     // Create exam record
     const examId = generateId()
-    
     const { data: examData, error: examError } = await supabase
       .from('exams')
       .insert({
@@ -181,19 +136,17 @@ export async function POST(request: NextRequest) {
         time_limit_minutes: timeLimitMinutes,
         total_questions: finalQuestions.length,
         difficulty_distribution: difficultyDistribution || {},
-        question_types: questionTypes || ['multiple-choice'], // Default to only multiple-choice
+        question_types: questionTypes || ['multiple-choice'],
         status: 'active'
       })
       .select()
       .single()
 
-    if (examError) {
-      throw new Error(examError.message)
-    }
+    if (examError) throw new Error(examError.message)
 
     // Create exam-question associations
     const examQuestions = finalQuestions.map((question, index) => ({
-      id: generateId(), // Add proper UUID for exam_questions table
+      id: generateId(),
       exam_id: examId,
       question_id: question.id,
       order_index: index + 1,
@@ -204,25 +157,7 @@ export async function POST(request: NextRequest) {
       .from('exam_questions')
       .insert(examQuestions)
 
-    if (examQuestionsError) {
-      throw new Error(examQuestionsError.message)
-    }
-
-    // Log bundle access for analytics
-    const bundleAccessLogs = bundleIds.map(bundleId => ({
-      user_id: userId,
-      file_id: bundleId,
-      action: 'exam_create',
-      metadata: {
-        examId,
-        questionsSelected: bundleDistribution[bundleId] || 0,
-        timestamp: new Date().toISOString()
-      }
-    }))
-
-    await supabase
-      .from('bundle_access_log')
-      .insert(bundleAccessLogs)
+    if (examQuestionsError) throw new Error(examQuestionsError.message)
 
     return NextResponse.json({
       success: true,
@@ -230,9 +165,7 @@ export async function POST(request: NextRequest) {
         id: examId,
         title,
         description,
-        bundleContext: examData.bundle_context,
         totalQuestions: finalQuestions.length,
-        timeLimitMinutes,
         createdAt: examData.created_at
       }
     })
@@ -240,10 +173,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Bundle exam creation error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create bundle exam' 
-      },
+      { success: false, error: 'Failed to create exam' },
       { status: 500 }
     )
   }

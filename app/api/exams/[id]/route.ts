@@ -1,41 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { id: examId } = await context.params
 
-    // Get exam details
+    // Get exam details - MUST be owned by the authenticated user
     const { data: exam, error: examError } = await supabase
       .from('exams')
       .select('*')
       .eq('id', examId)
+      .eq('user_id', session.user.id) // Authorization check
       .single()
 
     if (examError) {
-      if (examError.message?.includes('does not exist') || examError.message?.includes('relation') || examError.message?.includes('table')) {
+      if (examError.code === 'PGRST116') {
         return NextResponse.json({
           success: false,
-          error: 'Database not set up. Please complete database setup first.',
-          setupRequired: true
-        }, { status: 503 })
+          error: 'Exam not found or unauthorized'
+        }, { status: 404 })
       }
       throw new Error(examError.message)
-    }
-
-    if (!exam) {
-      return NextResponse.json({
-        success: false,
-        error: 'Exam not found'
-      }, { status: 404 })
     }
 
     // Get exam questions
@@ -53,20 +51,19 @@ export async function GET(
 
     if (questionsError) {
       console.error('Error fetching exam questions:', questionsError)
-      // Return exam without questions if questions table doesn't exist
       return NextResponse.json({
         success: true,
         data: {
           ...exam,
           questions: [],
-          message: 'Exam found but questions could not be loaded. Database setup may be incomplete.'
+          message: 'Exam found but questions could not be loaded.'
         }
       })
     }
 
-    // Transform questions to match the expected format
+    // Transform questions
     const questions = examQuestions.map(eq => {
-      const question = eq.questions
+      const question = (eq as any).questions
       return {
         id: question.id,
         text: question.text,
@@ -92,7 +89,6 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching exam:', error)
-    
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch exam'

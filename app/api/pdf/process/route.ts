@@ -1,33 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { extractTextFromPDF } from '@/lib/pdf/processor'
 import { questionGenerator } from '@/lib/ai/question-generator'
 import { saveQuestions } from '@/lib/database/questions'
 import { QuestionGenerationRequest } from '@/lib/questions/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { withTimeout, Timeouts, TimeoutError } from '@/lib/security/timeout'
 
 // Helper function to calculate difficulty distribution
 function calculateDifficultyDistribution(questions: any[]): Record<string, number> {
   const distribution: Record<string, number> = {}
-  
+
   questions.forEach(question => {
     const difficulty = question.difficulty || 'medium'
     distribution[difficulty] = (distribution[difficulty] || 0) + 1
   })
-  
+
   return distribution
 }
 
 // Helper function to extract course metadata from filename and content
 function extractCourseMetadata(filename: string, content: string) {
-  // Extract course info from filename
-  const cleanFilename = filename.replace(/\.[^/.]+$/, '') // Remove extension
-  
-  // Common subject patterns
+  const cleanFilename = filename.replace(/\.[^/.]+$/, '')
+
   const subjectPatterns = {
     'mathematics': /math|calculus|algebra|geometry|statistics|trigonometry/i,
     'chemistry': /chemistry|chemical|organic|inorganic|biochemistry/i,
@@ -40,24 +34,22 @@ function extractCourseMetadata(filename: string, content: string) {
     'psychology': /psychology|psychological|cognitive|behavioral|mental/i,
     'engineering': /engineering|mechanical|electrical|civil|structural/i
   }
-  
-  // Try to identify subject from filename and content
+
   let subjectTag = 'general'
   let courseId = cleanFilename.toLowerCase().replace(/[^a-z0-9]/g, '_')
-  
+
   for (const [subject, pattern] of Object.entries(subjectPatterns)) {
     if (pattern.test(filename) || pattern.test(content.substring(0, 1000))) {
       subjectTag = subject
       break
     }
   }
-  
-  // Extract potential course codes (e.g., MATH101, CS202)
+
   const courseCodeMatch = filename.match(/([A-Z]{2,4}\s*\d{3,4})/i)
   if (courseCodeMatch && courseCodeMatch[1]) {
     courseId = courseCodeMatch[1].replace(/\s+/g, '').toLowerCase()
   }
-  
+
   return {
     courseId,
     subjectTag,
@@ -67,9 +59,18 @@ function extractCourseMetadata(filename: string, content: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const userId = formData.get('userId') as string
 
     if (!file) {
       return NextResponse.json(
@@ -78,81 +79,52 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      )
-    }
+    console.log(`Starting PDF processing for file: ${file.name} for user: ${session.user.id}`)
 
-    console.log(`Starting PDF processing for file: ${file.name}`)
-
-    // Convert file to buffer for direct processing
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    
-    console.log(`Processing PDF with fileId: ${fileId}`)
 
-    // Extract course metadata from filename and content preview
-    const courseMetadata = extractCourseMetadata(file.name, '')
-
-    // Process PDF directly from buffer
-    console.log('Extracting text from PDF...')
-    const processingResult = await extractTextFromPDF(buffer, fileId)
-
-    if (processingResult.status === 'failed') {
-      console.error('PDF text extraction failed')
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'PDF processing failed',
-          details: 'Unable to extract text from PDF'
-        },
-        { status: 500 }
+    // Process PDF with timeout
+    let processingResult
+    try {
+      processingResult = await withTimeout(
+        extractTextFromPDF(buffer, fileId),
+        Timeouts.DRAG,
+        'PDF text extraction timed out'
       )
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        return NextResponse.json({ success: false, error: 'Request timed out during PDF extraction' }, { status: 504 })
+      }
+      throw error
     }
 
-    console.log(`Text extracted successfully. Length: ${processingResult.text.length} characters`)
+    if (processingResult.status === 'failed') {
+      return NextResponse.json({ success: false, error: 'PDF processing failed' }, { status: 500 })
+    }
 
-    // Update course metadata with content analysis
     const updatedCourseMetadata = extractCourseMetadata(file.name, processingResult.text)
 
-    // Generate questions from extracted text
-    console.log('Starting AI question generation...')
+    // Generate questions with timeout
     const generationRequest: QuestionGenerationRequest = {
       content: processingResult.text,
-      questionTypes: ['multiple-choice'], // Only generate multiple-choice questions
+      questionTypes: ['multiple-choice'],
       difficulty: ['easy', 'medium', 'hard'],
-      maxQuestions: 15, // Reduced from 30 to 15 for faster processing with 3 batches of 5
-      userId,
+      maxQuestions: 15,
+      userId: session.user.id,
       fileId
     }
 
     let questionResult
-    let timeoutId: NodeJS.Timeout | null = null
-    
     try {
-      // Add timeout for question generation (increased to 90s)
-      const questionPromise = questionGenerator.generateQuestions(generationRequest)
-      
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          reject(new Error('Question generation timeout after 90s'))
-        }, 90000)
-      })
-      
-      questionResult = await Promise.race([
-        questionPromise.then(result => {
-          if (timeoutId) clearTimeout(timeoutId)
-          return result
-        }),
-        timeoutPromise
-      ]) as any
+      questionResult = await withTimeout(
+        questionGenerator.generateQuestions(generationRequest),
+        Timeouts.SLOW,
+        'Question generation timed out'
+      )
 
       if (!questionResult.success) {
-        console.warn('Question generation failed:', questionResult.error)
-        // Return PDF processing success even if question generation fails
         return NextResponse.json({
           success: true,
           data: {
@@ -166,12 +138,9 @@ export async function POST(request: NextRequest) {
           }
         })
       }
-
-      console.log(`Generated ${questionResult.questions.length} questions successfully`)
-
     } catch (error) {
       console.error('Question generation error:', error)
-      // Return PDF processing success with fallback questions
+      const errorMsg = error instanceof TimeoutError ? 'Question generation timed out' : (error instanceof Error ? error.message : 'Generation failed')
       return NextResponse.json({
         success: true,
         data: {
@@ -179,47 +148,33 @@ export async function POST(request: NextRequest) {
           courseMetadata: updatedCourseMetadata,
           questionGeneration: {
             success: false,
-            error: error instanceof Error ? error.message : 'Question generation failed',
+            error: errorMsg,
             questionsGenerated: 0,
-            fallbackUsed: true,
-            message: 'PDF processed successfully. AI question generation timed out, but you can still create exams manually from the extracted text.'
+            fallbackUsed: true
           }
         }
       })
     }
 
-    // Add course metadata to questions before saving
+    // Add metadata and user ID to questions
     const questionsWithMetadata = questionResult.questions.map((question: any) => ({
       ...question,
+      user_id: session.user.id,
       file_id: fileId,
       course_id: updatedCourseMetadata.courseId,
       subject_tag: updatedCourseMetadata.subjectTag,
-      document_title: updatedCourseMetadata.documentTitle,
-      metadata: {
-        ...question.metadata,
-        courseMetadata: updatedCourseMetadata
-      }
+      document_title: updatedCourseMetadata.documentTitle
     }))
 
     // Save questions to database
-    console.log('Saving questions to database...')
-    const saveResult = await saveQuestions(questionsWithMetadata, userId)
-    console.log(`Save result:`, saveResult)
-    console.log(`Saved ${saveResult.saved} questions to database`)
+    const saveResult = await saveQuestions(questionsWithMetadata, session.user.id)
 
-    if (saveResult.saved === 0) {
-      console.error('No questions were saved! This indicates a database issue.')
-      console.error('Save result details:', saveResult)
-    }
-
-    // Create bundle entry for the questions
+    // Create bundle entry
     if (saveResult.saved > 0) {
-      console.log('Creating bundle entry...')
       try {
-        // Create bundle directly in database instead of HTTP call
         const bundleData = {
           file_id: fileId,
-          user_id: userId,
+          user_id: session.user.id,
           bundle_name: updatedCourseMetadata.documentTitle,
           subject_tag: updatedCourseMetadata.subjectTag,
           question_count: saveResult.saved,
@@ -229,34 +184,15 @@ export async function POST(request: NextRequest) {
           metadata: {
             originalFilename: file.name,
             fileSize: file.size,
-            processingMethod: 'enhanced-offline-generation'
+            processingMethod: 'authenticated-server-side'
           }
         }
-        
-        console.log('Bundle data to insert:', bundleData)
-        
-        const { data: bundleResult, error: bundleError } = await supabase
-          .from('question_bundles')
-          .upsert(bundleData)
-          .select()
-          .single()
 
-        if (bundleError) {
-          console.error('Bundle creation failed:', bundleError.message)
-          console.error('Bundle error details:', bundleError)
-        } else {
-          console.log('Bundle created successfully:', bundleResult?.bundle_name || updatedCourseMetadata.documentTitle)
-          console.log('Bundle result:', bundleResult)
-        }
+        await supabase.from('question_bundles').upsert(bundleData)
       } catch (bundleError) {
-        console.error('Bundle creation exception:', bundleError)
+        console.error('Bundle creation error:', bundleError)
       }
-    } else {
-      console.warn('No questions were saved, skipping bundle creation')
     }
-
-    // Since we're processing directly, no PDF cleanup needed
-    // The file only exists in memory during processing
 
     return NextResponse.json({
       success: true,
@@ -267,19 +203,17 @@ export async function POST(request: NextRequest) {
           success: true,
           questionsGenerated: questionResult.questions.length,
           questionsSaved: saveResult.saved,
-          metadata: questionResult.metadata,
-          processingMethod: 'direct' // Indicate direct processing
+          processingMethod: 'authenticated'
         }
       }
     })
 
   } catch (error) {
     console.error('PDF processing error:', error)
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Processing failed' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Processing failed'
       },
       { status: 500 }
     )

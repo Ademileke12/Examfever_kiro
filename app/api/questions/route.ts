@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getQuestions } from '@/lib/database/questions'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
     const type = searchParams.get('type')
     const difficulty = searchParams.get('difficulty')
     const topic = searchParams.get('topic')
     const fileId = searchParams.get('fileId')
     const limit = searchParams.get('limit')
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      )
-    }
 
     const filters: any = {}
     if (type) filters.type = type
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (fileId) filters.fileId = fileId
     if (limit) filters.limit = parseInt(limit)
 
-    const result = await getQuestions(userId, filters)
+    const result = await getQuestions(session.user.id, filters)
 
     if (!result.success) {
       return NextResponse.json(
@@ -45,9 +48,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Questions API error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch questions' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch questions'
       },
       { status: 500 }
     )

@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Use service role key for admin operations (if available)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    // Since we can't execute arbitrary SQL through the client,
-    // we'll try to create tables by attempting operations and checking errors
-    
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Use service role key for admin operations
+    const adminSupabase = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
     const results = []
     let tablesCreated = 0
-    
+
     // Try to create a test record in each table to see if they exist
     const tables = [
       {
@@ -28,7 +36,7 @@ export async function POST(request: NextRequest) {
         }
       },
       {
-        name: 'question_options', 
+        name: 'question_options',
         testData: {
           question_id: '00000000-0000-0000-0000-000000000000',
           text: 'Test option',
@@ -52,15 +60,15 @@ export async function POST(request: NextRequest) {
         }
       }
     ]
-    
+
     for (const table of tables) {
       try {
         // Try to select from the table first
-        const { data, error } = await supabase
+        const { data, error } = await adminSupabase
           .from(table.name)
           .select('*')
           .limit(1)
-        
+
         if (!error) {
           results.push({ table: table.name, exists: true, created: false })
           tablesCreated++
@@ -71,17 +79,17 @@ export async function POST(request: NextRequest) {
           tablesCreated++
         }
       } catch (error) {
-        results.push({ 
-          table: table.name, 
-          exists: false, 
-          created: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        results.push({
+          table: table.name,
+          exists: false,
+          created: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
         })
       }
     }
-    
+
     const allTablesExist = tablesCreated === tables.length
-    
+
     if (allTablesExist) {
       return NextResponse.json({
         success: true,
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest) {
         }
       })
     }
-    
+
     // If tables don't exist, we need manual setup
     return NextResponse.json({
       success: false,
@@ -113,14 +121,14 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Database setup error:', error)
-    
+
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Setup failed',
       message: 'Automatic setup not available. Please use manual setup in Supabase SQL Editor.',
       instructions: {
         step1: 'Go to your Supabase project dashboard',
-        step2: 'Open the SQL Editor', 
+        step2: 'Open the SQL Editor',
         step3: 'Copy and paste the setup script',
         step4: 'Run the script to create tables'
       }

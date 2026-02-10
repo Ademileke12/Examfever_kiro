@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { questionGenerator } from '@/lib/ai/question-generator'
 import { getAvailableModels } from '@/lib/ai/config'
+import { withTimeout, Timeouts } from '@/lib/security/timeout'
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const availableModels = getAvailableModels()
-    const modelStatus = await questionGenerator.getModelStatus()
+
+    // Get status with timeout
+    const modelStatus = await withTimeout(
+      questionGenerator.getModelStatus(),
+      Timeouts.NORMAL,
+      'Model status check timed out'
+    )
+
     const usageStats = questionGenerator.getUsageStats()
 
     const status = {
@@ -33,12 +52,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Model status check error:', error)
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Status check failed' 
-      },
+      { success: false, error: 'Status check failed' },
       { status: 500 }
     )
   }

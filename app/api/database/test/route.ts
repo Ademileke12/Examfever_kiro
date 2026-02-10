@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // Test basic connection
     const { data: connectionTest, error: connectionError } = await supabase
       .from('questions')
@@ -19,18 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: connectionError.message,
-        message: 'Database connection failed or tables do not exist',
-        details: {
-          code: connectionError.code,
-          hint: connectionError.hint
-        }
+        message: 'Database connection failed or tables do not exist'
       })
     }
 
-    // Test inserting a sample question
+    // Test inserting a sample question for the current user
     const testQuestion = {
       id: generateId(),
-      user_id: 'test-user',
+      user_id: session.user.id,
       type: 'multiple-choice',
       text: 'Database connection test question',
       difficulty: 'easy',
@@ -47,11 +48,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: insertError.message,
-        message: 'Failed to insert test question',
-        details: {
-          code: insertError.code,
-          hint: insertError.hint
-        }
+        message: 'Failed to insert test question'
       })
     }
 
@@ -68,7 +65,7 @@ export async function GET(request: NextRequest) {
         connectionWorking: true,
         tablesExist: true,
         insertWorking: true,
-        testQuestionId: insertData.id
+        userId: session.user.id
       }
     })
 

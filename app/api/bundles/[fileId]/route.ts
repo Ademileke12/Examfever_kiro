@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { getQuestions } from '@/lib/database/questions'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export interface BundleDetails {
   bundle: {
@@ -30,22 +25,25 @@ export interface BundleDetails {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> }
+  context: { params: Promise<{ fileId: string }> }
 ) {
   try {
-    const { fileId } = await params
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const includeQuestions = searchParams.get('includeQuestions') === 'true'
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    // Get bundle metadata
+    const { fileId } = await context.params
+    const userId = session.user.id
+    const { searchParams } = new URL(request.url)
+    const includeQuestions = searchParams.get('includeQuestions') === 'true'
+
+    // Get bundle metadata - MUST be owned by the user
     const { data: bundleData, error: bundleError } = await supabase
       .from('question_bundles')
       .select('*')
@@ -54,6 +52,9 @@ export async function GET(
       .single()
 
     if (bundleError) {
+      if (bundleError.code === 'PGRST116') {
+        return NextResponse.json({ success: false, error: 'Bundle not found' }, { status: 404 })
+      }
       throw new Error(bundleError.message)
     }
 
@@ -84,22 +85,21 @@ export async function GET(
     }
 
     if (includeQuestions) {
-      // Get questions for this bundle
       const questionsResult = await getQuestions(userId, { fileId })
-      
+
       if (questionsResult.success) {
         questions = questionsResult.questions
 
         // Calculate detailed statistics
         statistics.totalQuestions = questions.length
-        
+
         questions.forEach((question: any) => {
           // By type
           statistics.byType[question.type] = (statistics.byType[question.type] || 0) + 1
-          
+
           // By difficulty
           statistics.byDifficulty[question.difficulty] = (statistics.byDifficulty[question.difficulty] || 0) + 1
-          
+
           // By topic
           if (question.topic) {
             statistics.byTopic[question.topic] = (statistics.byTopic[question.topic] || 0) + 1
@@ -110,8 +110,8 @@ export async function GET(
         const qualityScores = questions
           .map((q: any) => q.metadata?.qualityScore || 0.7)
           .filter((score: number) => score > 0)
-        
-        statistics.averageQuality = qualityScores.length > 0 
+
+        statistics.averageQuality = qualityScores.length > 0
           ? qualityScores.reduce((sum: number, score: number) => sum + score, 0) / qualityScores.length
           : 0.7
       }
@@ -140,10 +140,7 @@ export async function GET(
   } catch (error) {
     console.error('Bundle details error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch bundle details' 
-      },
+      { success: false, error: 'Failed to fetch bundle details' },
       { status: 500 }
     )
   }
@@ -151,20 +148,24 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> }
+  context: { params: Promise<{ fileId: string }> }
 ) {
   try {
-    const { userId, bundleName, subjectTag, metadata } = await request.json()
-    const { fileId } = await params
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    // Update bundle metadata
+    const { bundleName, subjectTag, metadata } = await request.json()
+    const { fileId } = await context.params
+    const userId = session.user.id
+
+    // Update bundle metadata - strictly scoped to user
     const { data, error } = await supabase
       .from('question_bundles')
       .update({
@@ -178,9 +179,7 @@ export async function PUT(
       .select()
       .single()
 
-    if (error) {
-      throw new Error(error.message)
-    }
+    if (error) throw new Error(error.message)
 
     // Also update questions table if bundle name changed
     if (bundleName) {
@@ -208,10 +207,7 @@ export async function PUT(
   } catch (error) {
     console.error('Bundle update error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to update bundle' 
-      },
+      { success: false, error: 'Failed to update bundle' },
       { status: 500 }
     )
   }
@@ -219,41 +215,38 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> }
+  context: { params: Promise<{ fileId: string }> }
 ) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const { fileId } = await params
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    // Delete all questions in this bundle
+    const { fileId } = await context.params
+    const userId = session.user.id
+
+    // Delete questions and bundle - strictly scoped to user
     const { error: questionsError } = await supabase
       .from('questions')
       .delete()
       .eq('file_id', fileId)
       .eq('user_id', userId)
 
-    if (questionsError) {
-      throw new Error(questionsError.message)
-    }
+    if (questionsError) throw new Error(questionsError.message)
 
-    // Delete bundle metadata
     const { error: bundleError } = await supabase
       .from('question_bundles')
       .delete()
       .eq('file_id', fileId)
       .eq('user_id', userId)
 
-    if (bundleError) {
-      throw new Error(bundleError.message)
-    }
+    if (bundleError) throw new Error(bundleError.message)
 
     return NextResponse.json({
       success: true,
@@ -263,10 +256,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Bundle deletion error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to delete bundle' 
-      },
+      { success: false, error: 'Failed to delete bundle' },
       { status: 500 }
     )
   }

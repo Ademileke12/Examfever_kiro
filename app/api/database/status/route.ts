@@ -1,45 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const tables = ['questions', 'question_options', 'exams', 'exam_questions', 'user_activities', 'performance_history', 'exam_results']
     const tableStatus: Record<string, boolean> = {}
-    
+
     for (const tableName of tables) {
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from(tableName)
           .select('*')
           .limit(1)
-        
+
         tableStatus[tableName] = !error
       } catch (error) {
         tableStatus[tableName] = false
       }
     }
-    
+
     const allTablesExist = Object.values(tableStatus).every(exists => exists)
-    
+
     return NextResponse.json({
       success: true,
       data: {
         allTablesExist,
         tables: tableStatus,
-        message: allTablesExist 
-          ? 'All database tables are ready!' 
+        message: allTablesExist
+          ? 'All database tables are ready!'
           : 'Some database tables are missing. Please run the database setup script.',
         setupInstructions: allTablesExist ? null : {
           step1: 'Go to your Supabase project dashboard',
           step2: 'Open the SQL Editor',
           step3: 'Copy and paste the contents of scripts/setup-database.sql',
-          step4: 'Run the script to create the required tables',
-          alternative: 'Or run: npx supabase db push (if using local development)'
+          step4: 'Run the script to create the required tables'
         }
       }
     })

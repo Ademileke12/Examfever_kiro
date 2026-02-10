@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const {
       title,
@@ -16,11 +21,10 @@ export async function POST(request: NextRequest) {
       timeLimit,
       difficultyDistribution,
       questionTypes,
-      selectedQuestions,
-      userId
+      selectedQuestions
     } = body
 
-    if (!title || !userId || !selectedQuestions || selectedQuestions.length === 0) {
+    if (!title || !selectedQuestions || selectedQuestions.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -36,11 +40,11 @@ export async function POST(request: NextRequest) {
       .from('exams')
       .insert({
         id: examId,
-        user_id: userId,
+        user_id: session.user.id,
         title,
         description: description || null,
         time_limit_minutes: timeLimit || 60,
-        total_questions: uniqueQuestionIds.length, // Use unique count
+        total_questions: uniqueQuestionIds.length,
         difficulty_distribution: difficultyDistribution,
         question_types: questionTypes,
         status: 'active'
@@ -57,11 +61,9 @@ export async function POST(request: NextRequest) {
       id: generateId(),
       exam_id: examData.id,
       question_id: questionId as string,
-      order_index: index + 1, // Start from 1, not 0
+      order_index: index + 1,
       points: 1
     }))
-
-    console.log(`Creating exam with ${uniqueQuestionIds.length} unique questions (${selectedQuestions.length} originally selected)`)
 
     const { error: questionsError } = await supabase
       .from('exam_questions')
@@ -81,11 +83,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Exam creation error:', error)
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create exam' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create exam'
       },
       { status: 500 }
     )
@@ -94,13 +95,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
           points
         )
       `)
-      .eq('user_id', userId)
+      .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -128,11 +129,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Exams fetch error:', error)
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch exams' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch exams'
       },
       { status: 500 }
     )

@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const days = parseInt(searchParams.get('days') || '30')
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
+
+    const { searchParams } = new URL(request.url)
+    const days = parseInt(searchParams.get('days') || '30')
 
     // Calculate date range
     const endDate = new Date()
@@ -28,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { data: examResults, error: examError } = await supabase
       .from('exam_results')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', session.user.id)
       .gte('completed_at', startDate.toISOString())
       .lte('completed_at', endDate.toISOString())
       .order('completed_at', { ascending: true })
@@ -47,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { data: questions, error: questionsError } = await supabase
       .from('questions')
       .select('subject_tag, course_id, difficulty, topic')
-      .eq('user_id', userId)
+      .eq('user_id', session.user.id)
 
     if (questionsError) {
       console.error('Error fetching questions:', questionsError)
@@ -87,8 +84,8 @@ function calculateAnalyticsData(results: any[], days: number) {
   const totalStudyTime = Math.round(
     results.reduce((sum, result) => sum + (result.study_time_minutes || 0), 0) / 60 * 10
   ) / 10
-  
-  const averageScore = totalExams > 0 
+
+  const averageScore = totalExams > 0
     ? Math.round(results.reduce((sum, result) => sum + result.score, 0) / totalExams)
     : 0
 
@@ -126,18 +123,18 @@ function calculatePerformanceData(results: any[], questions: any[]) {
 
   // Calculate subject performance based on exam titles and available questions
   const subjects: { [key: string]: number[] } = {}
-  
+
   // Group by subject tags from questions
   const subjectTags = Array.from(new Set(questions.map(q => q.subject_tag).filter(Boolean)))
-  
+
   subjectTags.forEach(subject => {
     // Find exams that might relate to this subject (basic matching)
-    const relatedResults = results.filter(result => 
+    const relatedResults = results.filter(result =>
       result.exam_title?.toLowerCase().includes(subject?.toLowerCase() || '') ||
       subject?.toLowerCase().includes('math') && result.exam_title?.toLowerCase().includes('math') ||
       subject?.toLowerCase().includes('science') && result.exam_title?.toLowerCase().includes('science')
     )
-    
+
     if (relatedResults.length > 0) {
       subjects[subject] = relatedResults.map(r => r.score)
     }
@@ -184,17 +181,17 @@ function calculatePerformanceData(results: any[], questions: any[]) {
 
 function calculateKnowledgeGaps(results: any[], questions: any[]) {
   const gaps: any[] = []
-  
+
   // Analyze low-performing areas
   const subjectPerformance: { [key: string]: { scores: number[], attempts: number } } = {}
-  
+
   results.forEach(result => {
     // Try to match exam to subject
-    const matchedSubjects = questions.filter(q => 
+    const matchedSubjects = questions.filter(q =>
       result.exam_title?.toLowerCase().includes(q.subject_tag?.toLowerCase() || '') ||
       result.exam_title?.toLowerCase().includes(q.topic?.toLowerCase() || '')
     )
-    
+
     if (matchedSubjects.length > 0) {
       matchedSubjects.forEach(q => {
         const key = `${q.subject_tag || 'General'}-${q.topic || 'General Topics'}`
@@ -221,7 +218,7 @@ function calculateKnowledgeGaps(results: any[], questions: any[]) {
     const averageScore = Math.round(
       data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length
     )
-    
+
     if (averageScore < 70 && data.attempts >= 1) {
       gaps.push({
         subject: subject || 'General',
@@ -237,17 +234,17 @@ function calculateKnowledgeGaps(results: any[], questions: any[]) {
 
 function calculateMasteryAreas(results: any[], questions: any[]) {
   const mastery: any[] = []
-  
+
   // Analyze high-performing areas
   const subjectPerformance: { [key: string]: { scores: number[], attempts: number } } = {}
-  
+
   results.forEach(result => {
     // Try to match exam to subject
-    const matchedSubjects = questions.filter(q => 
+    const matchedSubjects = questions.filter(q =>
       result.exam_title?.toLowerCase().includes(q.subject_tag?.toLowerCase() || '') ||
       result.exam_title?.toLowerCase().includes(q.topic?.toLowerCase() || '')
     )
-    
+
     if (matchedSubjects.length > 0) {
       matchedSubjects.forEach(q => {
         const key = `${q.subject_tag || 'General'}-${q.topic || 'General Topics'}`
@@ -274,12 +271,12 @@ function calculateMasteryAreas(results: any[], questions: any[]) {
     const averageScore = Math.round(
       data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length
     )
-    
+
     // Calculate consistency (how close scores are to each other)
-    const consistency = data.scores.length > 1 
+    const consistency = data.scores.length > 1
       ? Math.round(100 - (Math.max(...data.scores) - Math.min(...data.scores)))
       : 100
-    
+
     if (averageScore >= 85 && data.attempts >= 2) {
       mastery.push({
         subject: subject || 'General',
@@ -346,7 +343,7 @@ function generateRecommendations(results: any[], gaps: any[], mastery: any[]) {
   if (results.length >= 3) {
     const scores = results.slice(-5).map(r => r.score)
     const variance = Math.max(...scores) - Math.min(...scores)
-    
+
     if (variance > 30) {
       recommendations.push({
         type: 'practice',
@@ -363,12 +360,12 @@ function generateRecommendations(results: any[], gaps: any[], mastery: any[]) {
 function calculateStreakDays(results: any[]) {
   if (results.length === 0) return 0
 
-  const dates = results.map(result => 
+  const dates = results.map(result =>
     new Date(result.completed_at).toISOString().split('T')[0]
   )
-  
+
   const uniqueDates = Array.from(new Set(dates)).sort().reverse()
-  
+
   let streak = 0
   const today = new Date().toISOString().split('T')[0]
   let currentDate = new Date()
@@ -376,7 +373,7 @@ function calculateStreakDays(results: any[]) {
   for (let i = 0; i < uniqueDates.length; i++) {
     const examDate = uniqueDates[i]
     const expectedDate = currentDate.toISOString().split('T')[0]
-    
+
     if (examDate === expectedDate) {
       streak++
       currentDate.setDate(currentDate.getDate() - 1)

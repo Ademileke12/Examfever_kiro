@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { fromUserId, toUserId } = await request.json()
 
     if (!fromUserId || !toUserId) {
@@ -17,7 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Migrating data from ${fromUserId} to ${toUserId}`)
+    console.log(`Migrating data from ${fromUserId} to ${toUserId} (Initiated by: ${session.user.id})`)
 
     // Migrate questions
     const { data: questionsData, error: questionsError } = await supabase
@@ -65,9 +70,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Migration error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Migration failed' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Migration failed'
       },
       { status: 500 }
     )

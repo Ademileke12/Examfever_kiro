@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const userId = session.user.id
     const body = await request.json()
-    const { 
-      userId, 
-      examId, 
+    const {
+      examId,
       examTitle,
-      score, 
-      correctAnswers, 
-      totalQuestions, 
-      timeSpent, 
+      score,
+      correctAnswers,
+      totalQuestions,
+      timeSpent,
       timeLimitMinutes,
       userAnswers,
       startTime,
@@ -24,17 +29,16 @@ export async function POST(request: NextRequest) {
       bundleContext
     } = body
 
-    if (!userId || !examId || score === undefined) {
+    if (!examId || score === undefined) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Calculate study time in minutes
     const studyTimeMinutes = Math.round(timeSpent / 60)
-    
-    // Save exam result
+
+    // Save exam result for the authenticated user
     const { data: result, error: resultError } = await supabase
       .from('exam_results')
       .insert({
@@ -63,27 +67,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If this was a bundle-based exam, log bundle access for analytics
-    if (bundleContext && bundleContext.bundleIds && bundleContext.bundleIds.length > 0) {
-      const bundleAccessLogs = bundleContext.bundleIds.map((bundleId: string) => ({
-        user_id: userId,
-        file_id: bundleId,
-        action: 'exam_take',
-        metadata: {
-          examId,
-          score,
-          correctAnswers,
-          totalQuestions,
-          timeSpent,
-          timestamp: new Date().toISOString()
-        }
-      }))
-
-      await supabase
-        .from('bundle_access_log')
-        .insert(bundleAccessLogs)
-    }
-
     return NextResponse.json({
       success: true,
       data: result
@@ -100,22 +83,24 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const supabase = await createClient()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!userId) {
+    if (!session) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    // Get recent exam results
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // Get recent exam results only for the authenticated user
     const { data: results, error } = await supabase
       .from('exam_results')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', session.user.id)
       .order('completed_at', { ascending: false })
       .limit(limit)
 
