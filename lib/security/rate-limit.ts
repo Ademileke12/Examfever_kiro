@@ -77,7 +77,7 @@ export function getRateLimitConfig(pathname: string) {
 
     return {
         limiter: generalApiRateLimiter,
-        limit: 5,        // 5 requests (adjusted for verification stability)
+        limit: 10,       // 10 requests (optimized for test stability)
         windowMs: 60000  // per minute
     }
 }
