@@ -5,17 +5,51 @@ import { motion } from 'framer-motion'
 import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal'
+import { AddOnStore } from '@/components/subscription/AddOnStore'
 import { UsageTracker } from '@/components/subscription/UsageTracker'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
-import { Crown, Zap, Rocket, Check } from 'lucide-react'
+import { Crown, Zap, Rocket, Check, History } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation' // Added useSearchParams
+import Link from 'next/link'
 
 export default function SubscriptionPage() {
-    const { subscription, loading } = useSubscription()
+    const { subscription, loading, refetchStatus } = useSubscription() // Added refetchStatus
     const [showModal, setShowModal] = React.useState(false)
+    const router = useRouter()
+    const searchParams = useSearchParams() // Hook
 
-    const handleUpgrade = (plan: string) => {
-        console.log(`Upgrading to ${plan}`)
-        window.location.href = `/checkout?plan=${plan.toLowerCase()}`
+    React.useEffect(() => {
+        if (searchParams.get('success') === 'true') {
+            // Refetch to get updated limits
+            refetchStatus()
+            // Optional: Show success message/toast
+            // Clean up URL
+            router.replace('/subscription')
+        }
+    }, [searchParams, refetchStatus, router])
+
+    const handleUpgrade = async (planName: string) => {
+        const planKey = planName.toLowerCase()
+
+        if (planKey.includes('free')) {
+            // Downgrade logic
+            if (confirm('Are you sure you want to downgrade to the Free plan? You will lose access to premium features immediately.')) {
+                try {
+                    const response = await fetch('/api/subscription/downgrade', { method: 'POST' })
+                    const result = await response.json()
+                    if (result.success) {
+                        window.location.reload()
+                    } else {
+                        alert('Failed to downgrade. Please try again.')
+                    }
+                } catch (e) {
+                    alert('An error occurred.')
+                }
+            }
+        } else {
+            // Upgrade redirect
+            router.push(`/checkout?plan=${planKey}`)
+        }
     }
 
     const plans = [
@@ -65,7 +99,7 @@ export default function SubscriptionPage() {
                     className="text-center mb-12"
                 >
                     <h1 className="text-4xl md:text-6xl font-black mb-4 gradient-text">
-                        Choose Your Plan
+                        Your Subscription
                     </h1>
                     <p className="text-readable-muted text-lg max-w-2xl mx-auto">
                         Unlock more power, more exams, and faster results with our premium plans.
@@ -85,7 +119,7 @@ export default function SubscriptionPage() {
                             uploadsTotal={subscription.uploads_allowed}
                             examsRemaining={subscription.exams_allowed - subscription.exams_used}
                             examsTotal={subscription.exams_allowed}
-                            expiryDate={subscription.sub_end_date}
+                            expiryDate={subscription.sub_end_date || ''}
                             loading={loading}
                         />
                     </motion.div>
@@ -162,6 +196,8 @@ export default function SubscriptionPage() {
                         </motion.div>
                     ))}
                 </div>
+
+                <AddOnStore />
 
                 {/* FAQ or Additional Info */}
                 <motion.div

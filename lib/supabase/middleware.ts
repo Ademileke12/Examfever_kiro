@@ -58,17 +58,17 @@ export async function createMiddlewareSupabaseClient(request: NextRequest) {
 
   try {
     // Refresh session if expired - required for Server Components
-    const { data: { session }, error } = await supabase.auth.getSession()
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error) {
       console.error('Auth session error:', error)
       // Don't throw here, let the route handle auth failures
     }
 
-    return { supabase, response, session }
+    return { supabase, response, user }
   } catch (error) {
     console.error('Supabase client error:', error)
-    return { supabase, response, session: null }
+    return { supabase, response, user: null }
   }
 }
 

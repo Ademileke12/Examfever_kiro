@@ -5,13 +5,13 @@ import { getRateLimitConfig } from '@/lib/security/rate-limit'
 
 export async function middleware(request: NextRequest) {
   try {
-    const { supabase, response, session } = await createMiddlewareSupabaseClient(request)
+    const { supabase, response, user } = await createMiddlewareSupabaseClient(request)
     const pathname = request.nextUrl.pathname
     let isUnauthorizedApi = false
 
     // Handle protected routes
     if (isProtectedRoute(pathname)) {
-      if (!session) {
+      if (!user) {
         if (pathname.startsWith('/api')) {
           isUnauthorizedApi = true
         } else {
@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
       const { limiter, limit, windowMs } = getRateLimitConfig(pathname)
       const xForwardedFor = request.headers.get('x-forwarded-for')
       const ip = xForwardedFor?.split(',')[0] || request.headers.get('x-real-ip') || 'anonymous'
-      const identifier = session?.user?.id || ip
+      const identifier = user?.id || ip
 
       const result = await limiter.check(identifier, limit, windowMs)
 
@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
 
     // Handle auth routes (redirect authenticated users away from login/register)
     if (isAuthRoute(pathname)) {
-      if (session) {
+      if (user) {
         const redirectUrl = getRedirectUrl(request, '/dashboard')
         return NextResponse.redirect(redirectUrl)
       }

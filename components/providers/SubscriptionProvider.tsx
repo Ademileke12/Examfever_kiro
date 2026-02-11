@@ -84,9 +84,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     }
 
     const handleUpgrade = (plan: string) => {
-        console.log(`Upgrading to ${plan}`)
-        // This will be implemented with Paystack integration later
-        // Redirect to Paystack or show checkout
         window.location.href = `/checkout?plan=${plan.toLowerCase()}`
     }
 
