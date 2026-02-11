@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
               uploadsTotal={subscription.uploads_allowed}
               examsRemaining={subscription.exams_allowed - subscription.exams_used}
               examsTotal={subscription.exams_allowed}
-              expiryDate={subscription.sub_end_date}
+              expiryDate={subscription.sub_end_date || ''}
               loading={subLoading}
             />
           </motion.div>
