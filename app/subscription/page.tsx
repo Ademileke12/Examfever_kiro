@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal'
-import { AddOnStore } from '@/components/subscription/AddOnStore'
+
 import { UsageTracker } from '@/components/subscription/UsageTracker'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { Crown, Zap, Rocket, Check, History, Loader2 } from 'lucide-react'
@@ -196,8 +196,6 @@ function SubscriptionContent() {
                         </motion.div>
                     ))}
                 </div>
-
-                <AddOnStore />
 
                 {/* FAQ or Additional Info */}
                 <motion.div

@@ -13,21 +13,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user stats
-    const { data: stats, error: statsError } = await supabase
-      .from('user_stats')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (statsError) {
-      console.error('Error fetching user stats:', statsError)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch user statistics' },
-        { status: 500 }
-      )
-    }
-
     // Get exam statistics for the authenticated user
     const { data: examResults, error: examError } = await supabase
       .from('exam_results')
