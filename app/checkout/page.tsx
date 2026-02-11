@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Navbar } from '@/components/ui/Navbar'
@@ -65,7 +65,7 @@ const ADDONS: Record<string, PurchaseItem> = {
     }
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const plan = searchParams.get('plan')
@@ -230,5 +230,17 @@ export default function CheckoutPage() {
                 </div>
             </div>
         </ProtectedRoute>
+    )
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     )
 }

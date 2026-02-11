@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
@@ -8,15 +8,15 @@ import { SubscriptionModal } from '@/components/subscription/SubscriptionModal'
 import { AddOnStore } from '@/components/subscription/AddOnStore'
 import { UsageTracker } from '@/components/subscription/UsageTracker'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
-import { Crown, Zap, Rocket, Check, History } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation' // Added useSearchParams
+import { Crown, Zap, Rocket, Check, History, Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function SubscriptionPage() {
-    const { subscription, loading, refetchStatus } = useSubscription() // Added refetchStatus
+function SubscriptionContent() {
+    const { subscription, loading, refetchStatus } = useSubscription()
     const [showModal, setShowModal] = React.useState(false)
     const router = useRouter()
-    const searchParams = useSearchParams() // Hook
+    const searchParams = useSearchParams()
 
     React.useEffect(() => {
         if (searchParams.get('success') === 'true') {
@@ -226,5 +226,17 @@ export default function SubscriptionPage() {
                 onUpgrade={handleUpgrade}
             />
         </div>
+    )
+}
+
+export default function SubscriptionPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#F9F9FB] dark:bg-[#0A0A0C]">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        }>
+            <SubscriptionContent />
+        </Suspense>
     )
 }
