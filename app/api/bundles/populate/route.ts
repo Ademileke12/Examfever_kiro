@@ -4,16 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const userId = session.user.id
+    const userId = user.id
     console.log('Starting bundle population for user:', userId)
 
     // Get questions for the authenticated user
@@ -103,9 +103,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     const { data: bundles, error: bundleError } = await supabase
       .from('question_bundles')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (bundleError) throw new Error(bundleError.message)
 

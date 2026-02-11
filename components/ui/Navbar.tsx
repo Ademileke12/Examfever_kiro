@@ -27,7 +27,8 @@ export function Navbar() {
     { href: '/browse', label: 'MY EXAMS', requireAuth: false },
     { href: '/questions', label: 'QUESTIONS', requireAuth: false },
     { href: '/upload', label: 'UPLOAD PDF', requireAuth: false },
-    { href: '/analytics', label: 'ANALYTICS', requireAuth: true }
+    { href: '/analytics', label: 'ANALYTICS', requireAuth: true },
+    { href: '/subscription', label: 'SUBSCRIPTION', requireAuth: true }
   ]
 
   const visibleNavItems = navItems.filter(item => !item.requireAuth || user)

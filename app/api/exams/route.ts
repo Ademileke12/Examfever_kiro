@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
+import { checkSubscriptionLimit, incrementUsage } from '@/lib/security/limit-check'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -31,6 +32,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check subscription limit BEFORE creating exam
+    const limitCheck = await checkSubscriptionLimit('exam')
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: limitCheck.error || 'Exam limit exceeded',
+          remaining: limitCheck.remaining,
+          total: limitCheck.total
+        },
+        { status: 403 }
+      )
+    }
+
     // Remove duplicates from selected questions
     const uniqueQuestionIds = Array.from(new Set(selectedQuestions))
 
@@ -40,7 +55,7 @@ export async function POST(request: NextRequest) {
       .from('exams')
       .insert({
         id: examId,
-        user_id: session.user.id,
+        user_id: user.id,
         title,
         description: description || null,
         time_limit_minutes: timeLimit || 60,
@@ -73,6 +88,9 @@ export async function POST(request: NextRequest) {
       throw new Error(questionsError.message || 'Failed to insert exam questions')
     }
 
+    // Increment usage counter after successful exam creation
+    await incrementUsage('exam')
+
     return NextResponse.json({
       success: true,
       data: {
@@ -96,27 +114,31 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const { data: exams, error } = await supabase
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const offset = parseInt(searchParams.get('offset') || '0')
+    const status = searchParams.get('status')
+
+    let query = supabase
       .from('exams')
-      .select(`
-        *,
-        exam_questions (
-          question_id,
-          order_index,
-          points
-        )
-      `)
-      .eq('user_id', session.user.id)
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
+
+    if (status) {
+      query = query.eq('status', status)
+    }
+
+    const { data: exams, error, count } = await query.range(offset, offset + limit - 1)
 
     if (error) {
       throw new Error(error.message)

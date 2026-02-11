@@ -4,9 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { data: examResults, error: examError } = await supabase
       .from('exam_results')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .gte('completed_at', startDate.toISOString())
       .lte('completed_at', endDate.toISOString())
       .order('completed_at', { ascending: true })
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { data: questions, error: questionsError } = await supabase
       .from('questions')
       .select('subject_tag, course_id, difficulty, topic')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (questionsError) {
       console.error('Error fetching questions:', questionsError)

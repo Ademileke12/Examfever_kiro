@@ -4,9 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Migrating data from ${fromUserId} to ${toUserId} (Initiated by: ${session.user.id})`)
+    console.log(`Migrating data from ${fromUserId} to ${toUserId} (Initiated by: ${user.id})`)
 
     // Migrate questions
     const { data: questionsData, error: questionsError } = await supabase

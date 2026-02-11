@@ -15,7 +15,10 @@ import { pageVariants } from '@/lib/animations/variants'
 import UploadSettings, { UploadSettings as UploadSettingsType } from '@/components/upload/UploadSettings'
 import { Database, Upload, Sparkles, Zap, FileText, Brain } from 'lucide-react'
 
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
+
 export default function UploadPage() {
+  const { refetchStatus } = useSubscription()
   const [uploads, setUploads] = useState<UploadProgress[]>([])
   const [questionResults, setQuestionResults] = useState<Record<string, any>>({})
   const [uploadSettings, setUploadSettings] = useState<UploadSettingsType>({
@@ -25,8 +28,8 @@ export default function UploadPage() {
   })
 
   const updateUploadProgress = useCallback((fileId: string, updates: Partial<UploadProgress>) => {
-    setUploads(prev => prev.map(upload => 
-      upload.fileId === fileId 
+    setUploads(prev => prev.map(upload =>
+      upload.fileId === fileId
         ? { ...upload, ...updates }
         : upload
     ))
@@ -34,7 +37,7 @@ export default function UploadPage() {
 
   const processFile = useCallback(async (file: File, validation: PDFValidationResult) => {
     const fileId = generateFileId()
-    
+
     // Add to uploads list
     const uploadProgress: UploadProgress = {
       fileId,
@@ -43,7 +46,7 @@ export default function UploadPage() {
       status: 'validating',
       startTime: new Date()
     }
-    
+
     setUploads(prev => [...prev, uploadProgress])
 
     // Check validation
@@ -63,7 +66,7 @@ export default function UploadPage() {
       // Process file with polling approach for better timeout handling
       const formData = new FormData()
       formData.append('file', file)
-      
+
       // Get proper user ID from auth system
       const userId = getUserId()
       formData.append('userId', userId)
@@ -95,13 +98,16 @@ export default function UploadPage() {
         endTime: new Date()
       })
 
+      // Refresh subscription usage data
+      refetchStatus()
+
     } catch (error) {
       let errorMessage = 'Processing failed'
-      
+
       if (error instanceof Error) {
         errorMessage = error.message
       }
-      
+
       updateUploadProgress(fileId, {
         status: 'error',
         error: errorMessage,
@@ -127,7 +133,7 @@ export default function UploadPage() {
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <ParticleBackground />
       <Navbar />
-      
+
       <motion.div
         variants={pageVariants}
         initial="initial"
@@ -135,7 +141,7 @@ export default function UploadPage() {
         className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8 relative z-10"
       >
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -155,7 +161,7 @@ export default function UploadPage() {
         </motion.div>
 
         {/* Upload Section */}
-        <motion.div 
+        <motion.div
           className="glass glass-hover rounded-3xl p-8 mb-8 border border-glass-border shadow-glass-dark"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -181,7 +187,7 @@ export default function UploadPage() {
               </div>
             </div>
 
-            <motion.div 
+            <motion.div
               className="flex justify-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -199,7 +205,7 @@ export default function UploadPage() {
 
         {/* Progress Section */}
         {uploads.length > 0 && (
-          <motion.div 
+          <motion.div
             className="glass glass-hover rounded-3xl p-8 mb-8 border border-glass-border shadow-glass-dark"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -211,8 +217,8 @@ export default function UploadPage() {
               </div>
               <h3 className="text-xl font-semibold text-foreground">Processing Status</h3>
             </div>
-            <PDFUploadProgress 
-              uploads={uploads} 
+            <PDFUploadProgress
+              uploads={uploads}
               questionResults={questionResults}
             />
           </motion.div>
@@ -220,14 +226,14 @@ export default function UploadPage() {
 
         {/* Database Setup Notice */}
         {uploads.some(upload => upload.status === 'completed' && questionResults[upload.fileId]?.success === true && questionResults[upload.fileId]?.questionsSaved === 0) && (
-          <motion.div 
+          <motion.div
             className="glass glass-hover rounded-3xl p-8 mb-8 border-2 border-yellow-400/30 bg-gradient-to-br from-yellow-50/10 to-orange-50/10 shadow-glow-lg"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-start gap-4 mb-6">
-              <motion.div 
+              <motion.div
                 className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg"
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -243,20 +249,20 @@ export default function UploadPage() {
                 </p>
               </div>
             </div>
-            
+
             <div className="glass rounded-2xl p-6 mb-6 border border-yellow-400/20">
               <p className="text-yellow-700 dark:text-yellow-300 mb-4 text-lg leading-relaxed">
                 <strong>Great news!</strong> The AI successfully generated {(() => {
                   const firstKey = Object.keys(questionResults)[0]
                   return firstKey ? (questionResults[firstKey]?.totalGenerated || 'multiple') : 'multiple'
-                })()} questions from your PDF. 
+                })()} questions from your PDF.
                 However, they couldn't be saved because the database tables haven't been set up yet.
               </p>
               <p className="text-yellow-700 dark:text-yellow-300 text-lg leading-relaxed">
                 This is a <strong>one-time setup</strong> that takes less than 2 minutes. Once done, all future uploads will save questions automatically.
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <motion.a
                 href="/setup"
@@ -276,7 +282,7 @@ export default function UploadPage() {
         )}
 
         {/* Instructions */}
-        <motion.div 
+        <motion.div
           className="glass glass-hover rounded-3xl p-8 border border-blue-400/20 bg-gradient-to-br from-blue-50/10 to-indigo-50/10"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -290,7 +296,7 @@ export default function UploadPage() {
               How It Works
             </h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { icon: FileText, text: "Select PDF files (up to 50MB each) with text content" },

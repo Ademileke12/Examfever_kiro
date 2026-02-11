@@ -82,8 +82,8 @@ export default function Home() {
       </motion.div>
 
       {/* How ExamFever Works */}
-      <div className="w-full max-w-7xl py-24 px-6">
-        <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-20 text-center text-[#7C3AED]">
+      <div className="w-full max-w-7xl py-12 md:py-24 px-6">
+        <h2 className="text-4xl md:text-7xl font-black mb-12 md:mb-20 text-center gradient-text">
           How ExamFever Works
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -94,10 +94,10 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-start p-12 bg-[#F9F9FB] dark:bg-white/[0.03] rounded-[3rem] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 transition-all group"
+              className="flex flex-col items-start p-8 md:p-12 glass glass-hover rounded-[2.5rem] md:rounded-[3rem] group"
             >
-              <div className="w-14 h-14 bg-[#7C3AED] rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-[#7C3AED]/30 group-hover:scale-110 transition-transform">
-                <step.icon className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#7C3AED] rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg shadow-[#7C3AED]/30 group-hover:scale-110 transition-transform">
+                <step.icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
               </div>
               <h3 className="text-2xl font-black mb-4 text-[#111114] dark:text-white tracking-tight leading-tight">
                 {step.title}

@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (fileId) filters.fileId = fileId
     if (limit) filters.limit = parseInt(limit)
 
-    const result = await getQuestions(session.user.id, filters)
+    const result = await getQuestions(user.id, filters)
 
     if (!result.success) {
       return NextResponse.json(

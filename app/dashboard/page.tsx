@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
-import { BookOpen, Clock, TrendingUp, Award, Play, Upload, BarChart3, Loader2 } from 'lucide-react'
+import { BookOpen, Clock, TrendingUp, Award, Play, Upload, BarChart3, Loader2, GraduationCap, Timer, Target, Trophy } from 'lucide-react'
 import { getUserId } from '@/lib/auth/user'
 
 interface ExamResult {
@@ -38,10 +38,10 @@ function DashboardContent() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -52,7 +52,7 @@ function DashboardContent() {
   const fetchDashboardData = async () => {
     try {
       const userId = getUserId()
-      
+
       // Fetch recent exams and stats in parallel
       const [examsResponse, statsResponse] = await Promise.all([
         fetch(`/api/exam-results?userId=${userId}&limit=5`),
@@ -101,31 +101,31 @@ function DashboardContent() {
   }
 
   const displayStats = stats || defaultStats
-  
+
   const statsCards = [
-    { 
-      label: 'Exams Completed', 
-      value: displayStats.totalExams.toString(), 
-      icon: BookOpen, 
-      color: '#2563eb' 
+    {
+      label: 'Exams Completed',
+      value: displayStats.totalExams.toString(),
+      icon: GraduationCap,
+      color: 'from-blue-500 to-indigo-600'
     },
-    { 
-      label: 'Study Hours', 
-      value: displayStats.totalStudyHours.toString(), 
-      icon: Clock, 
-      color: '#16a34a' 
+    {
+      label: 'Study Hours',
+      value: displayStats.totalStudyHours.toString(),
+      icon: Timer,
+      color: 'from-green-500 to-emerald-600'
     },
-    { 
-      label: 'Average Score', 
-      value: `${displayStats.averageScore}%`, 
-      icon: TrendingUp, 
-      color: '#9333ea' 
+    {
+      label: 'Average Score',
+      value: `${displayStats.averageScore}%`,
+      icon: Target,
+      color: 'from-purple-500 to-fuchsia-600'
     },
-    { 
-      label: 'Achievements', 
-      value: displayStats.achievements.toString(), 
-      icon: Award, 
-      color: '#ea580c' 
+    {
+      label: 'Achievements',
+      value: displayStats.achievements.toString(),
+      icon: Trophy,
+      color: 'from-amber-500 to-orange-600'
     }
   ]
 
@@ -133,16 +133,16 @@ function DashboardContent() {
     <div className="min-h-screen bg-background text-foreground">
       <ParticleBackground />
       <Navbar />
-      
-      <div style={{ 
-        maxWidth: '90rem', 
-        margin: '0 auto', 
+
+      <div style={{
+        maxWidth: '90rem',
+        margin: '0 auto',
         padding: isMobile ? '0 1rem' : '0 1.5rem',
         paddingTop: isMobile ? '5rem' : '6rem',
         paddingBottom: isMobile ? '2rem' : '2rem'
       }}>
         {/* Header */}
-        <div style={{ 
+        <div style={{
           marginBottom: isMobile ? '2rem' : '2rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -151,7 +151,7 @@ function DashboardContent() {
           gap: isMobile ? '1rem' : '0'
         }}>
           <div>
-            <h1 className="gradient-text" style={{ 
+            <h1 className="gradient-text" style={{
               fontSize: isMobile ? 'clamp(1.75rem, 5vw, 2.5rem)' : '2.25rem',
               fontWeight: '700',
               marginBottom: isMobile ? '0.5rem' : '0.5rem',
@@ -159,7 +159,7 @@ function DashboardContent() {
             }}>
               My Learning Dashboard
             </h1>
-            <p style={{ 
+            <p style={{
               color: 'hsl(var(--muted-foreground))',
               fontSize: isMobile ? '1rem' : '1.125rem',
               lineHeight: '1.6'
@@ -195,10 +195,10 @@ function DashboardContent() {
 
         {/* Loading State */}
         {loading && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             padding: isMobile ? '3rem 0' : '3rem 0',
             color: 'hsl(var(--muted-foreground))',
             fontSize: isMobile ? '1rem' : '1rem'
@@ -218,51 +218,31 @@ function DashboardContent() {
         {/* Stats Cards */}
         {!loading && (
           <>
-            <div style={{ 
-              display: 'grid', 
+            <div style={{
+              display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: isMobile ? '1rem' : '1.5rem',
               marginBottom: isMobile ? '1.5rem' : '2rem'
             }}>
               {statsCards.map((stat, index) => (
-                <div 
-                  key={index} 
-                  className="glass glass-hover bento-card rounded-2xl p-6 group"
+                <div
+                  key={index}
+                  className="glass glass-hover bento-card rounded-2xl p-6 group transition-all duration-300 hover:scale-[1.02]"
                   style={{
                     animationDelay: `${index * 0.1}s`
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ 
-                        color: '#64748b',
-                        marginBottom: isMobile ? '0.25rem' : '0.5rem',
-                        fontWeight: '500',
-                        fontSize: isMobile ? '0.75rem' : '0.875rem'
-                      }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-500 dark:text-slate-400 mb-2 font-medium text-sm md:text-base">
                         {stat.label}
                       </p>
-                      <p style={{ 
-                        fontSize: isMobile ? '1.25rem' : '1.875rem',
-                        fontWeight: '700',
-                        color: '#1e293b',
-                        transition: 'transform 0.3s ease'
-                      }} className="group-hover:scale-110">
+                      <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white group-hover:scale-105 transition-transform duration-300">
                         {stat.value}
                       </p>
                     </div>
-                    <div style={{
-                      padding: isMobile ? '0.5rem' : '0.75rem',
-                      borderRadius: isMobile ? '0.5rem' : '0.75rem',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                      boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.39)',
-                      marginLeft: '0.5rem'
-                    }}>
-                      <stat.icon style={{ 
-                        width: isMobile ? '1.25rem' : '2rem', 
-                        height: isMobile ? '1.25rem' : '2rem', 
-                        color: 'white' 
-                      }} />
+                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg shadow-blue-500/20`}>
+                      <stat.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                     </div>
                   </div>
                 </div>
@@ -290,33 +270,32 @@ function DashboardContent() {
                     ) : (
                       <div className="space-y-4">
                         {recentExams.map((exam, index) => (
-                          <div 
-                            key={exam.id} 
-                            className="glass glass-hover rounded-xl p-4 group cursor-pointer"
+                          <div
+                            key={exam.id}
+                            className="glass glass-hover rounded-xl p-4 group cursor-pointer transition-all duration-300 hover:scale-[1.01]"
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-glow">
-                                  <BookOpen className="w-7 h-7 text-white" />
+                                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                  <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-white" />
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold text-readable text-lg mb-1 group-hover:text-blue-600 transition-colors">
+                                  <h3 className="font-semibold text-slate-800 dark:text-white text-base md:text-lg mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                     {exam.exam_title}
                                   </h3>
-                                  <p className="text-readable-light">
+                                  <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {exam.total_questions} questions • {formatDuration(exam.time_spent_seconds)} • {formatDate(exam.completed_at)}
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className={`text-2xl font-bold mb-1 ${
-                                  exam.score >= 80 ? 'text-green-600' : 
-                                  exam.score >= 60 ? 'text-yellow-600' : 'text-red-600'
-                                }`}>
+                                <div className={`text-xl md:text-2xl font-bold mb-1 ${exam.score >= 80 ? 'text-green-600 dark:text-green-400' :
+                                    exam.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                                  }`}>
                                   {exam.score}%
                                 </div>
-                                <div className="text-sm text-blue-600 font-medium group-hover:underline">
+                                <div className="text-xs md:text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:underline">
                                   View Details
                                 </div>
                               </div>
@@ -325,7 +304,7 @@ function DashboardContent() {
                         ))}
                       </div>
                     )}
-                    
+
                     {recentExams.length > 0 && (
                       <div className="mt-6">
                         <Link href="/browse" className="text-blue-600 hover:text-blue-700 font-semibold text-lg hover:underline transition-colors">
@@ -347,34 +326,34 @@ function DashboardContent() {
                     </h2>
                   </div>
                   <div className="p-6 space-y-4">
-                    <Link 
-                      href="/upload" 
-                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300 hover:shadow-glow"
+                    <Link
+                      href="/upload"
+                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300"
                     >
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-glow">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Upload className="w-6 h-6 text-white" />
                       </div>
-                      <span className="font-semibold text-readable group-hover:text-blue-600 transition-colors">Upload New PDF</span>
+                      <span className="font-semibold text-slate-700 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Upload New PDF</span>
                     </Link>
-                    
-                    <Link 
-                      href="/browse" 
-                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300 hover:shadow-glow"
+
+                    <Link
+                      href="/browse"
+                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10"
                     >
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-glow">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
                         <Play className="w-6 h-6 text-white" />
                       </div>
-                      <span className="font-semibold text-readable group-hover:text-green-600 transition-colors">Take Practice Exam</span>
+                      <span className="font-semibold text-slate-700 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">Take Practice Exam</span>
                     </Link>
-                    
-                    <Link 
-                      href="/analytics" 
-                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300 hover:shadow-glow"
+
+                    <Link
+                      href="/analytics"
+                      className="magnetic glass glass-hover flex items-center gap-4 p-4 rounded-xl group transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10"
                     >
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-glow">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                         <BarChart3 className="w-6 h-6 text-white" />
                       </div>
-                      <span className="font-semibold text-readable group-hover:text-purple-600 transition-colors">View Analytics</span>
+                      <span className="font-semibold text-slate-700 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">View Analytics</span>
                     </Link>
                   </div>
                 </div>
@@ -389,18 +368,17 @@ function DashboardContent() {
                   <div className="p-6">
                     <div className="space-y-4">
                       <div className="flex justify-between text-lg">
-                        <span className="font-medium text-readable-muted">This Week</span>
-                        <span className="font-bold text-readable">{displayStats.recentExams} exams</span>
+                        <span className="font-medium text-slate-500 dark:text-slate-400">This Week</span>
+                        <span className="font-bold text-slate-800 dark:text-white">{displayStats.recentExams} exams</span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-700 ease-out ${
-                            displayStats.weeklyProgress >= 100 ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-blue-500 to-purple-600'
-                          }`}
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ease-out ${displayStats.weeklyProgress >= 100 ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-blue-500 to-purple-600'
+                            }`}
                           style={{ width: `${Math.min(displayStats.weeklyProgress, 100)}%` }}
                         />
                       </div>
-                      <p className="text-sm text-readable-light font-medium">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                         Goal: {displayStats.weeklyGoal} exams per week
                       </p>
                     </div>

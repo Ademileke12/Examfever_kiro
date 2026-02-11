@@ -29,9 +29,9 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -39,7 +39,7 @@ export async function GET(
     }
 
     const { fileId } = await context.params
-    const userId = session.user.id
+    const userId = user.id
     const { searchParams } = new URL(request.url)
     const includeQuestions = searchParams.get('includeQuestions') === 'true'
 
@@ -152,9 +152,9 @@ export async function PUT(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -163,7 +163,7 @@ export async function PUT(
 
     const { bundleName, subjectTag, metadata } = await request.json()
     const { fileId } = await context.params
-    const userId = session.user.id
+    const userId = user.id
 
     // Update bundle metadata - strictly scoped to user
     const { data, error } = await supabase
@@ -219,9 +219,9 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -229,7 +229,7 @@ export async function DELETE(
     }
 
     const { fileId } = await context.params
-    const userId = session.user.id
+    const userId = user.id
 
     // Delete questions and bundle - strictly scoped to user
     const { error: questionsError } = await supabase

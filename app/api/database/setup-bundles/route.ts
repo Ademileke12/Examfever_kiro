@@ -7,9 +7,9 @@ import { join } from 'path'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const sqlPath = join(process.cwd(), 'scripts', 'bundle-system-setup.sql')
     const setupSQL = readFileSync(sqlPath, 'utf-8')
 
-    console.log(`Running bundle system setup by user: ${session.user.id}`)
+    console.log(`Running bundle system setup by user: ${user.id}`)
 
     // Execute the setup SQL
     const { data, error } = await adminSupabase.rpc('exec_sql', {

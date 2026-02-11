@@ -2,12 +2,12 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { 
-  BookOpen, 
-  Clock, 
-  TrendingUp, 
-  Target, 
-  Award, 
+import {
+  BookOpen,
+  Clock,
+  TrendingUp,
+  Target,
+  Award,
   Brain,
   AlertTriangle,
   CheckCircle,
@@ -88,8 +88,8 @@ export default function AnalyticsDashboard({
 
   if (!analyticsData) {
     return (
-      <div className="glass rounded-2xl p-12 text-center">
-        <BarChart3 className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+      <div className="glass rounded-2xl p-8 md:p-12 text-center">
+        <BarChart3 className="w-16 h-16 mx-auto mb-4 text-readable-light" />
         <h3 className="text-xl font-semibold text-readable mb-2">
           No Analytics Data Available
         </h3>
@@ -99,13 +99,13 @@ export default function AnalyticsDashboard({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
             href="/upload"
-            className="magnetic glass glass-hover px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-glow transition-all duration-300"
+            className="magnetic btn-primary"
           >
             Upload Study Material
           </a>
           <a
             href="/browse"
-            className="magnetic glass glass-hover px-6 py-3 rounded-xl font-semibold text-readable border border-slate-300 dark:border-slate-600 hover:border-blue-500 transition-all duration-300"
+            className="magnetic btn-outline"
           >
             Browse Exams
           </a>
@@ -198,7 +198,7 @@ export default function AnalyticsDashboard({
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                    <div 
+                    <div
                       className="h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
                       style={{ width: `${score}%` }}
                     />
@@ -219,28 +219,27 @@ export default function AnalyticsDashboard({
           transition={{ delay: 0.5, duration: 0.5 }}
           className="glass rounded-2xl p-6"
         >
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-readable mb-4 flex items-center gap-2">
             <Brain className="w-5 h-5" />
             Subject Performance
           </h3>
           <div className="space-y-3">
             {performanceData && Object.entries(performanceData.subjects).map(([subject, score]) => (
               <div key={subject} className="flex items-center justify-between">
-                <span className="text-sm text-slate-600 dark:text-slate-400">
+                <span className="text-sm text-readable-muted">
                   {subject}
                 </span>
                 <div className="flex items-center gap-2">
-                  <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        score >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
-                        score >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' :
-                        'bg-gradient-to-r from-red-500 to-red-600'
-                      }`}
+                  <div className="w-24 bg-gray-200 dark:bg-white/10 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-500 ${score >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
+                          score >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' :
+                            'bg-gradient-to-r from-red-500 to-red-600'
+                        }`}
                       style={{ width: `${score}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium text-slate-900 dark:text-white w-8">
+                  <span className="text-sm font-medium text-readable w-8">
                     {score}%
                   </span>
                 </div>
@@ -265,16 +264,16 @@ export default function AnalyticsDashboard({
           </h3>
           <div className="space-y-4">
             {knowledgeGaps.slice(0, 3).map((gap, index) => (
-              <div key={index} className="glass glass-hover p-4 rounded-xl border border-orange-200 dark:border-orange-800">
+              <div key={index} className="glass glass-hover p-4 rounded-xl border-orange-200/50 dark:border-orange-500/20">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-slate-900 dark:text-white">
+                  <h4 className="font-medium text-readable">
                     {gap.topic}
                   </h4>
                   <span className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                     {gap.score}%
                   </span>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-readable-muted">
                   {gap.subject} • {gap.attempts} attempts
                 </p>
               </div>
@@ -295,16 +294,16 @@ export default function AnalyticsDashboard({
           </h3>
           <div className="space-y-4">
             {masteryAreas.slice(0, 3).map((area, index) => (
-              <div key={index} className="glass glass-hover p-4 rounded-xl border border-green-200 dark:border-green-800">
+              <div key={index} className="glass glass-hover p-4 rounded-xl border-green-200/50 dark:border-green-500/20">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-slate-900 dark:text-white">
+                  <h4 className="font-medium text-readable">
                     {area.topic}
                   </h4>
                   <span className="text-sm text-green-600 dark:text-green-400 font-medium">
                     {area.score}%
                   </span>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-readable-muted">
                   {area.subject} • {area.consistency}% consistency
                 </p>
               </div>
@@ -326,20 +325,18 @@ export default function AnalyticsDashboard({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {recommendations.map((rec, index) => (
-            <div 
-              key={index} 
-              className={`glass glass-hover p-4 rounded-xl border-2 border-dashed transition-all duration-300 ${
-                rec.priority === 'high' ? 'border-red-300 dark:border-red-700' :
-                rec.priority === 'medium' ? 'border-yellow-300 dark:border-yellow-700' :
-                'border-green-300 dark:border-green-700'
-              }`}
+            <div
+              key={index}
+              className={`glass glass-hover p-4 rounded-xl border-2 border-dashed transition-all duration-300 ${rec.priority === 'high' ? 'border-red-300 dark:border-red-700' :
+                  rec.priority === 'medium' ? 'border-yellow-300 dark:border-yellow-700' :
+                    'border-green-300 dark:border-green-700'
+                }`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className={`w-2 h-2 rounded-full ${
-                  rec.priority === 'high' ? 'bg-red-500' :
-                  rec.priority === 'medium' ? 'bg-yellow-500' :
-                  'bg-green-500'
-                }`} />
+                <span className={`w-2 h-2 rounded-full ${rec.priority === 'high' ? 'bg-red-500' :
+                    rec.priority === 'medium' ? 'bg-yellow-500' :
+                      'bg-green-500'
+                  }`} />
                 <h4 className="font-medium text-slate-900 dark:text-white">
                   {rec.title}
                 </h4>
@@ -382,7 +379,7 @@ export default function AnalyticsDashboard({
           </div>
         </div>
         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
-          <div 
+          <div
             className="h-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${Math.min((analyticsData.weeklyProgress / analyticsData.weeklyGoal) * 100, 100)}%` }}
           />

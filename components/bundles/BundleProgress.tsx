@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { 
+import {
   BookOpen,
   CheckCircle,
   Clock
@@ -27,7 +27,7 @@ export default function BundleProgress({
   answeredQuestions,
   timeRemaining
 }: BundleProgressProps) {
-  if (!bundleContext) {
+  if (!bundleContext || !bundleContext.bundleNames) {
     return null
   }
 
@@ -48,7 +48,7 @@ export default function BundleProgress({
     for (let i = 0; i < bundleName.length; i++) {
       hash = bundleName.charCodeAt(i) + ((hash << 5) - hash)
     }
-    
+
     const colors = [
       'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
       'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
@@ -57,7 +57,7 @@ export default function BundleProgress({
       'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
       'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
     ]
-    
+
     return colors[Math.abs(hash) % colors.length]
   }
 
@@ -81,9 +81,8 @@ export default function BundleProgress({
         {timeRemaining !== undefined && (
           <div className="flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4 text-gray-500" />
-            <span className={`font-mono ${
-              timeRemaining < 300 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
-            }`}>
+            <span className={`font-mono ${timeRemaining < 300 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+              }`}>
               {formatTime(timeRemaining)}
             </span>
           </div>
@@ -119,7 +118,7 @@ export default function BundleProgress({
           {bundleContext.bundleNames.map((bundleName, index) => {
             const bundleId = bundleContext.bundleIds[index]
             const questionCount = bundleId ? (bundleContext.bundleDistribution[bundleId] || 0) : 0
-            
+
             return (
               <div
                 key={bundleId}

@@ -60,9 +60,9 @@ function extractCourseMetadata(filename: string, content: string) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Starting PDF processing for file: ${file.name} for user: ${session.user.id}`)
+    console.log(`Starting PDF processing for file: ${file.name} for user: ${user.id}`)
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       questionTypes: ['multiple-choice'],
       difficulty: ['easy', 'medium', 'hard'],
       maxQuestions: 15,
-      userId: session.user.id,
+      userId: user.id,
       fileId
     }
 
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     // Add metadata and user ID to questions
     const questionsWithMetadata = questionResult.questions.map((question: any) => ({
       ...question,
-      user_id: session.user.id,
+      user_id: user.id,
       file_id: fileId,
       course_id: updatedCourseMetadata.courseId,
       subject_tag: updatedCourseMetadata.subjectTag,
@@ -167,14 +167,14 @@ export async function POST(request: NextRequest) {
     }))
 
     // Save questions to database
-    const saveResult = await saveQuestions(questionsWithMetadata, session.user.id)
+    const saveResult = await saveQuestions(questionsWithMetadata, user.id)
 
     // Create bundle entry
     if (saveResult.saved > 0) {
       try {
         const bundleData = {
           file_id: fileId,
-          user_id: session.user.id,
+          user_id: user.id,
           bundle_name: updatedCourseMetadata.documentTitle,
           subject_tag: updatedCourseMetadata.subjectTag,
           question_count: saveResult.saved,

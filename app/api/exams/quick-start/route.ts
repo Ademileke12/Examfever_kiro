@@ -1,19 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { checkSubscriptionLimit, incrementUsage } from '@/lib/security/limit-check'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, bundleId } = await request.json()
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!userId || !bundleId) {
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Check subscription limit for exams
+    const limitCheck = await checkSubscriptionLimit('exam')
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: limitCheck.error || 'Exam creation limit exceeded',
+          remaining: limitCheck.remaining,
+          total: limitCheck.total
+        },
+        { status: 403 }
+      )
+    }
+
+    const { bundleId } = await request.json()
+
+    if (!bundleId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing bundleId' },
         { status: 400 }
       )
     }
@@ -23,7 +43,7 @@ export async function POST(request: NextRequest) {
       .from('question_bundles')
       .select('*')
       .eq('file_id', bundleId)
-      .eq('user_id', userId)
+      .eq('user_id', user.id) // Use authenticated user ID
       .single()
 
     if (bundleError || !bundleData) {
@@ -37,7 +57,7 @@ export async function POST(request: NextRequest) {
     const { data: allQuestions, error: questionsError } = await supabase
       .from('questions')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('file_id', bundleId)
       .order('created_at')
 
@@ -53,30 +73,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Remove duplicates (just in case)
-    const uniqueQuestions = allQuestions.filter((question, index, self) => 
+    const uniqueQuestions = allQuestions.filter((question, index, self) =>
       index === self.findIndex(q => q.id === question.id)
     )
 
-    console.log(`Quick-start exam: Using all ${uniqueQuestions.length} questions from bundle ${bundleData.bundle_name}`)
+    console.log(`Quick-start exam: Using all ${uniqueQuestions.length} questions from bundle ${bundleData.name}`)
 
     // Create exam record with all questions
     const examId = generateId()
-    const examTitle = `${bundleData.bundle_name} - Full Test`
-    
+    const examTitle = `${bundleData.name} - Full Test`
+
     const { data: examData, error: examError } = await supabase
       .from('exams')
       .insert({
         id: examId,
-        user_id: userId,
+        user_id: user.id,
         title: examTitle,
-        description: `Complete exam with all questions from ${bundleData.bundle_name}`,
-        source_file_ids: [bundleId],
-        bundle_context: {
-          bundleIds: [bundleId],
-          bundleNames: [bundleData.bundle_name],
-          bundleDistribution: { [bundleId]: uniqueQuestions.length },
-          totalQuestions: uniqueQuestions.length
+        description: `Complete exam with all questions from ${bundleData.name}`,
+        // removed source_file_ids as it does not exist in schema
+        settings: {
+          source_file_ids: [bundleId],
+          is_quick_start: true
         },
+        // removed bundle_context as it does not exist in schema based on migration 000
+        // moving bundle context to settings or difficulty_distribution is already handled
         time_limit_minutes: 60, // Default 60 minutes
         total_questions: uniqueQuestions.length,
         difficulty_distribution: {
@@ -111,19 +131,8 @@ export async function POST(request: NextRequest) {
       throw new Error(examQuestionsError.message)
     }
 
-    // Log bundle access for analytics
-    await supabase
-      .from('bundle_access_log')
-      .insert({
-        user_id: userId,
-        file_id: bundleId,
-        action: 'quick_exam_start',
-        metadata: {
-          examId,
-          questionsUsed: uniqueQuestions.length,
-          timestamp: new Date().toISOString()
-        }
-      })
+    // Increment usage counter after successful exam creation
+    await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,
@@ -133,16 +142,16 @@ export async function POST(request: NextRequest) {
         title: examTitle,
         totalQuestions: uniqueQuestions.length,
         timeLimitMinutes: 60,
-        bundleName: bundleData.bundle_name
+        bundleName: bundleData.name
       }
     })
 
   } catch (error) {
     console.error('Quick-start exam creation error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create quick-start exam' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create quick-start exam'
       },
       { status: 500 }
     )

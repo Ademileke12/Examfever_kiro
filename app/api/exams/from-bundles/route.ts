@@ -12,19 +12,35 @@ export interface BundleExamRequest {
   difficultyDistribution: Record<string, number>
 }
 
+import { checkSubscriptionLimit, incrementUsage } from '@/lib/security/limit-check'
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const userId = session.user.id
+    // Check subscription limit for exams
+    const limitCheck = await checkSubscriptionLimit('exam')
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: limitCheck.error || 'Exam creation limit exceeded',
+          remaining: limitCheck.remaining,
+          total: limitCheck.total
+        },
+        { status: 403 }
+      )
+    }
+
+    const userId = user.id
     const {
       title,
       description,
@@ -158,6 +174,8 @@ export async function POST(request: NextRequest) {
       .insert(examQuestions)
 
     if (examQuestionsError) throw new Error(examQuestionsError.message)
+
+    await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,

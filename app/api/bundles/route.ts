@@ -15,11 +15,11 @@ export interface Bundle {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Authentication required' },
         { status: 401 }
       )
     }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('question_bundles')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .order('last_accessed', { ascending: false, nullsFirst: false })
       .order('upload_date', { ascending: false })
 
@@ -75,12 +75,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Authentication required' },
         { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId') || user.id
+
+    // Check if requesting user matches authenticated user
+    if (userId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized access to user data' },
+        { status: 403 }
       )
     }
 
@@ -98,7 +109,7 @@ export async function POST(request: NextRequest) {
       .from('question_bundles')
       .upsert({
         file_id: fileId,
-        user_id: session.user.id,
+        user_id: user.id,
         bundle_name: bundleName,
         subject_tag: subjectTag,
         updated_at: new Date().toISOString()
@@ -114,7 +125,7 @@ export async function POST(request: NextRequest) {
         .from('questions')
         .select('difficulty')
         .eq('file_id', fileId)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
 
       if (!questionsError && questionsData) {
         const questionCount = questionsData.length
@@ -132,7 +143,7 @@ export async function POST(request: NextRequest) {
             difficulty_distribution: difficultyDistribution
           })
           .eq('file_id', fileId)
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
       }
     } catch (statsError) {
       console.warn('Failed to update bundle stats:', statsError)

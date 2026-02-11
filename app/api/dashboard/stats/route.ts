@@ -4,12 +4,27 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      )
+    }
+
+    // Get user stats
+    const { data: stats, error: statsError } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (statsError) {
+      console.error('Error fetching user stats:', statsError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch user statistics' },
+        { status: 500 }
       )
     }
 
@@ -17,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { data: examResults, error: examError } = await supabase
       .from('exam_results')
       .select('score, study_time_minutes, completed_at')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (examError) {
       console.error('Error fetching exam stats:', examError)

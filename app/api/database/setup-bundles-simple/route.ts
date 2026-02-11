@@ -4,16 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    console.log('Checking bundle system setup for user:', session.user.id)
+    console.log('Checking bundle system setup for user:', user.id)
 
     // Check if question_bundles table exists
     const { error: checkError } = await supabase
@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const { data: bundles, error: bundleError } = await supabase
       .from('question_bundles')
       .select('id, file_id, bundle_name')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .limit(5)
 
     if (bundleError) {

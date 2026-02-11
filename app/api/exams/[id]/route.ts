@@ -7,9 +7,9 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -23,7 +23,7 @@ export async function GET(
       .from('exams')
       .select('*')
       .eq('id', examId)
-      .eq('user_id', session.user.id) // Authorization check
+      .eq('user_id', user.id) // Authorization check
       .single()
 
     if (examError) {

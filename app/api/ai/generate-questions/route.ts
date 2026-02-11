@@ -8,9 +8,9 @@ import { withTimeout, Timeouts, TimeoutError } from '@/lib/security/timeout'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       difficulty: body.difficulty || ['medium'],
       maxQuestions: Math.min(body.maxQuestions || 10, 50),
       topics: body.topics,
-      userId: session.user.id,
+      userId: user.id,
       fileId: body.fileId
     }
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save questions to database
-    const saveResult = await saveQuestions(result.questions, session.user.id)
+    const saveResult = await saveQuestions(result.questions, user.id)
 
     return NextResponse.json({
       success: true,

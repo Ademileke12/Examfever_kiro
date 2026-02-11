@@ -5,7 +5,10 @@ import { motion } from 'framer-motion'
 import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
+import { UsageTracker } from '@/components/subscription/UsageTracker'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { useAnalytics, useActivityTracker } from '@/hooks/useAnalytics'
+import { FileText, Upload, Library, RefreshCw, ArrowRight } from 'lucide-react'
 
 export default function AnalyticsPage() {
   const {
@@ -20,6 +23,7 @@ export default function AnalyticsPage() {
     updateTimeRange
   } = useAnalytics(30)
 
+  const { subscription, loading: subLoading } = useSubscription()
   const { trackActivity } = useActivityTracker()
 
   React.useEffect(() => {
@@ -59,7 +63,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
+    <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
       <ParticleBackground />
       <Navbar />
       <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
@@ -76,13 +80,32 @@ export default function AnalyticsPage() {
                 Track your learning progress and optimize your study strategy
               </p>
             </div>
-            
-            <TimeRangeSelector 
+
+            <TimeRangeSelector
               onTimeRangeChange={updateTimeRange}
               loading={loading}
             />
           </div>
         </motion.div>
+
+        {/* Usage Tracker */}
+        {subscription && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="mb-8"
+          >
+            <UsageTracker
+              uploadsRemaining={subscription.uploads_allowed - subscription.uploads_used}
+              uploadsTotal={subscription.uploads_allowed}
+              examsRemaining={subscription.exams_allowed - subscription.exams_used}
+              examsTotal={subscription.exams_allowed}
+              expiryDate={subscription.sub_end_date}
+              loading={subLoading}
+            />
+          </motion.div>
+        )}
 
         {/* Main Dashboard */}
         <AnalyticsDashboard
@@ -108,12 +131,12 @@ export default function AnalyticsPage() {
   )
 }
 
-function TimeRangeSelector({ 
-  onTimeRangeChange, 
-  loading 
-}: { 
+function TimeRangeSelector({
+  onTimeRangeChange,
+  loading
+}: {
   onTimeRangeChange: (days: number) => void
-  loading: boolean 
+  loading: boolean
 }) {
   const [selectedRange, setSelectedRange] = React.useState(30)
 
@@ -138,11 +161,10 @@ function TimeRangeSelector({
             key={range.value}
             onClick={() => handleRangeChange(range.value)}
             disabled={loading}
-            className={`magnetic px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${
-              selectedRange === range.value
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-glow'
-                : 'text-readable-muted hover:text-readable'
-            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`magnetic px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${selectedRange === range.value
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-glow'
+              : 'text-readable-muted hover:text-readable'
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {range.label}
           </button>
@@ -157,36 +179,44 @@ function QuickActions({ onRefresh }: { onRefresh: () => void }) {
     {
       title: 'Take Practice Exam',
       description: 'Test your knowledge with a timed exam',
-      icon: '📝',
+      icon: FileText,
       href: '/exam',
-      color: 'from-blue-500 to-purple-600'
+      color: 'from-blue-500 to-indigo-600',
+      iconBg: 'bg-blue-500/10',
+      iconColor: 'text-blue-500'
     },
     {
       title: 'Upload New PDF',
       description: 'Add study materials and generate questions',
-      icon: '📄',
+      icon: Upload,
       href: '/upload',
-      color: 'from-green-500 to-emerald-600'
+      color: 'from-green-500 to-emerald-600',
+      iconBg: 'bg-green-500/10',
+      iconColor: 'text-green-500'
     },
     {
       title: 'View Question Bank',
       description: 'Browse your generated questions',
-      icon: '🏦',
+      icon: Library,
       href: '/questions',
-      color: 'from-yellow-500 to-orange-600'
+      color: 'from-orange-500 to-amber-600',
+      iconBg: 'bg-orange-500/10',
+      iconColor: 'text-orange-500'
     },
     {
       title: 'Refresh Data',
       description: 'Update your analytics with latest data',
-      icon: '🔄',
+      icon: RefreshCw,
       onClick: onRefresh,
-      color: 'from-slate-500 to-slate-600'
+      color: 'from-slate-500 to-slate-700',
+      iconBg: 'bg-slate-500/10',
+      iconColor: 'text-slate-400'
     }
   ]
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <h3 className="text-lg font-semibold text-readable mb-4">Quick Actions</h3>
+    <div className="glass rounded-3xl p-6 border border-white/5">
+      <h3 className="text-lg font-semibold text-readable mb-6">Quick Actions</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action, index) => (
           <motion.div
@@ -198,14 +228,14 @@ function QuickActions({ onRefresh }: { onRefresh: () => void }) {
             {action.href ? (
               <a
                 href={action.href}
-                className={`magnetic glass glass-hover block p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-transparent transition-all duration-300 bg-gradient-to-br ${action.color} hover:shadow-glow`}
+                className="group glass glass-hover block p-5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all duration-300 hover:shadow-glow"
               >
                 <ActionContent action={action} />
               </a>
             ) : (
               <button
                 onClick={action.onClick}
-                className={`magnetic glass glass-hover w-full p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-transparent transition-all duration-300 bg-gradient-to-br ${action.color} hover:shadow-glow`}
+                className="group glass glass-hover w-full p-5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all duration-300 hover:shadow-glow text-left"
               >
                 <ActionContent action={action} />
               </button>
@@ -218,11 +248,18 @@ function QuickActions({ onRefresh }: { onRefresh: () => void }) {
 }
 
 function ActionContent({ action }: { action: any }) {
+  const Icon = action.icon
   return (
-    <div className="text-center">
-      <div className="text-2xl mb-2">{action.icon}</div>
-      <h4 className="font-medium mb-1 text-white">{action.title}</h4>
-      <p className="text-xs text-white/80">{action.description}</p>
+    <div className="flex flex-col h-full">
+      <div className={`w-12 h-12 rounded-xl ${action.iconBg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+        <Icon className={`w-6 h-6 ${action.iconColor}`} />
+      </div>
+      <h4 className="font-semibold text-readable mb-1 group-hover:text-primary transition-colors">{action.title}</h4>
+      <p className="text-xs text-readable-muted mb-3 flex-grow">{action.description}</p>
+      <div className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+        <span>Go</span>
+        <ArrowRight className="w-3 h-3" />
+      </div>
     </div>
   )
 }
