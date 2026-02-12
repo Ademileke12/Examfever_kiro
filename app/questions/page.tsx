@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  BookOpen, 
+import {
+  BookOpen,
   Plus,
   Folder
 } from 'lucide-react'
 import BundleGrid from '@/components/bundles/BundleGrid'
 import { Bundle } from '@/app/api/bundles/route'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export default function QuestionsPage() {
+  const { refetchStatus } = useSubscription()
   const [bundles, setBundles] = useState<Bundle[]>([])
   const [loading, setLoading] = useState(true)
   const [editingBundle, setEditingBundle] = useState<Bundle | null>(null)
@@ -21,10 +23,10 @@ export default function QuestionsPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -38,7 +40,7 @@ export default function QuestionsPage() {
       const userId = localStorage.getItem('userId') || 'demo-user'
       const response = await fetch(`/api/bundles?userId=${userId}`)
       const data = await response.json()
-      
+
       if (data.success) {
         setBundles(data.bundles)
       } else {
@@ -68,7 +70,7 @@ export default function QuestionsPage() {
         method: 'DELETE'
       })
       const data = await response.json()
-      
+
       if (data.success) {
         setBundles(prev => prev.filter(b => b.fileId !== fileId))
       } else {
@@ -87,9 +89,9 @@ export default function QuestionsPage() {
     try {
       // Show loading state (optional)
       console.log(`Starting quick exam with all questions from ${bundle.bundleName}...`)
-      
+
       const userId = localStorage.getItem('userId') || 'demo-user'
-      
+
       // Create exam with ALL questions from the bundle
       const response = await fetch('/api/exams/quick-start', {
         method: 'POST',
@@ -101,8 +103,11 @@ export default function QuestionsPage() {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
+        // Refresh subscription usage data before redirect
+        await refetchStatus()
+
         // Redirect directly to exam interface
         window.location.href = `/exam?id=${data.examId}`
       } else {
@@ -117,12 +122,12 @@ export default function QuestionsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <ParticleBackground />
-      
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 10, 
-        maxWidth: '80rem', 
-        margin: '0 auto', 
+
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        maxWidth: '80rem',
+        margin: '0 auto',
         padding: isMobile ? '0 1rem' : '0 1rem',
         paddingTop: isMobile ? '5rem' : '6rem',
         paddingBottom: isMobile ? '2rem' : '2rem'
@@ -143,10 +148,10 @@ export default function QuestionsPage() {
             borderRadius: '1rem',
             marginBottom: isMobile ? '1.5rem' : '1.5rem'
           }}>
-            <Folder style={{ 
-              width: isMobile ? '2rem' : '2rem', 
-              height: isMobile ? '2rem' : '2rem', 
-              color: 'white' 
+            <Folder style={{
+              width: isMobile ? '2rem' : '2rem',
+              height: isMobile ? '2rem' : '2rem',
+              color: 'white'
             }} />
           </div>
           <h1 style={{
@@ -191,10 +196,10 @@ export default function QuestionsPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <BookOpen style={{ 
-                  width: isMobile ? '2.5rem' : '3rem', 
-                  height: isMobile ? '2.5rem' : '3rem', 
-                  color: 'hsl(var(--muted-foreground))' 
+                <BookOpen style={{
+                  width: isMobile ? '2.5rem' : '3rem',
+                  height: isMobile ? '2.5rem' : '3rem',
+                  color: 'hsl(var(--muted-foreground))'
                 }} />
               </div>
               <h3 className="text-foreground" style={{

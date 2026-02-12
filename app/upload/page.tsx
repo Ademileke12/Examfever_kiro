@@ -114,7 +114,7 @@ export default function UploadPage() {
         endTime: new Date()
       })
     }
-  }, [updateUploadProgress])
+  }, [updateUploadProgress, refetchStatus])
 
   const handleFileSelect = useCallback((file: File, validation: PDFValidationResult) => {
     processFile(file, validation)
