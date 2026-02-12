@@ -116,7 +116,14 @@ export async function GET(request: NextRequest) {
 
         const pendingCount = referrals?.filter(r => r.status === 'signed_up').length || 0
         const subscribedCount = referrals?.filter(r => r.status === 'subscribed').length || 0
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'
+
+        // Determine Site URL: Env Var > Request Origin > Localhost fallback
+        let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+        if (!siteUrl) {
+            const host = request.headers.get('host')
+            const protocol = host?.includes('localhost') ? 'http' : 'https'
+            siteUrl = host ? `${protocol}://${host}` : 'http://localhost:3001'
+        }
 
         return NextResponse.json({
             success: true,
