@@ -41,7 +41,7 @@ export async function checkSubscriptionLimit(
         if (!subscription || error?.code === 'PGRST116') {
             const { data: newSubscription, error: createError } = await supabase
                 .from('user_subscriptions')
-                .insert({
+                .upsert({
                     user_id: user.id,
                     plan_tier: 'free',
                     uploads_allowed: 2,
@@ -49,6 +49,8 @@ export async function checkSubscriptionLimit(
                     uploads_used: 0,
                     exams_used: 0,
                     is_active: true
+                }, {
+                    onConflict: 'user_id'
                 })
                 .select()
                 .single()
