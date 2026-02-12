@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       content: processingResult.text,
       questionTypes: ['multiple-choice'],
       difficulty: ['easy', 'medium', 'hard'],
-      maxQuestions: 15,
+      maxQuestions: 40,
       userId: user.id,
       fileId
     }

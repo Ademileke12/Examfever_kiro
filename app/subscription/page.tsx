@@ -136,17 +136,18 @@ function SubscriptionContent() {
                             className={`relative p-8 rounded-3xl glass glass-hover border-2 ${plan.recommended ? 'border-primary shadow-glow' : 'border-transparent'
                                 } ${plan.current ? 'ring-2 ring-green-500' : ''}`}
                         >
-                            {plan.recommended && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">
-                                    Most Popular
-                                </div>
-                            )}
-
-                            {plan.current && (
-                                <div className="absolute -top-4 right-4 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">
-                                    Current Plan
-                                </div>
-                            )}
+                            <div className="absolute -top-4 left-0 right-0 flex justify-center gap-2 px-4 pointer-events-none">
+                                {plan.recommended && (
+                                    <div className="bg-primary text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg whitespace-nowrap pointer-events-auto">
+                                        Most Popular
+                                    </div>
+                                )}
+                                {plan.current && (
+                                    <div className="bg-green-500 text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg whitespace-nowrap pointer-events-auto">
+                                        Current Plan
+                                    </div>
+                                )}
+                            </div>
 
                             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-6 shadow-lg`}>
                                 <plan.icon className="w-8 h-8 text-white" />
@@ -222,6 +223,7 @@ function SubscriptionContent() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 onUpgrade={handleUpgrade}
+                currentPlanTier={subscription?.plan_tier}
             />
         </div>
     )

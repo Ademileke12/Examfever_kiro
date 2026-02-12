@@ -8,7 +8,7 @@ import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
 import { UsageTracker } from '@/components/subscription/UsageTracker'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { useAnalytics, useActivityTracker } from '@/hooks/useAnalytics'
-import { FileText, Upload, Library, RefreshCw, ArrowRight } from 'lucide-react'
+import { FileText, Upload, Library, RefreshCw, ArrowRight, Loader2 } from 'lucide-react'
 
 export default function AnalyticsPage() {
   const {
@@ -62,72 +62,137 @@ export default function AnalyticsPage() {
     )
   }
 
+  if (subLoading) {
+    return (
+      <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const isFreePlan = !subscription || subscription.plan_tier === 'free'
+
   return (
     <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
       <ParticleBackground />
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8">
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 sm:mb-8"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-1 sm:mb-2">
-                Analytics Dashboard
-              </h1>
-              <p className="text-readable-muted text-sm sm:text-base md:text-lg">
-                Track your learning progress and optimize your study strategy
-              </p>
-            </div>
-
-            <TimeRangeSelector
-              onTimeRangeChange={updateTimeRange}
-              loading={loading}
-            />
-          </div>
-        </motion.div>
-
-        {/* Usage Tracker */}
-        {subscription && (
+        {isFreePlan ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mb-8"
+            className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4"
           >
-            <UsageTracker
-              uploadsRemaining={subscription.uploads_allowed - subscription.uploads_used}
-              uploadsTotal={subscription.uploads_allowed}
-              examsRemaining={subscription.exams_allowed - subscription.exams_used}
-              examsTotal={subscription.exams_allowed}
-              expiryDate={subscription.sub_end_date || ''}
-              loading={subLoading}
-            />
+            <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl relative">
+              <RefreshCw className="w-12 h-12 text-white animate-spin-slow" />
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-primary">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-black gradient-text mb-4">
+              Premium Analytics
+            </h2>
+            <p className="text-readable-muted text-lg max-w-xl mb-10">
+              Unlock deep insights into your learning progress, identify knowledge gaps, and receive AI-powered study recommendations.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 w-full max-w-2xl">
+              {[
+                { title: 'Performance Trends', desc: 'Track your score improvements over time.' },
+                { title: 'Knowledge Gaps', desc: 'Identify topics that need more review.' },
+                { title: 'Mastery Analysis', desc: 'See which subjects you fixed.' },
+                { title: 'AI Recommendations', desc: 'Personalized paths for better grades.' }
+              ].map((feature, i) => (
+                <div key={i} className="glass p-5 rounded-2xl border border-white/10 text-left flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <ArrowRight className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-readable text-sm">{feature.title}</h4>
+                    <p className="text-xs text-readable-muted">{feature.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href="/subscription"
+              className="bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 shadow-glow flex items-center gap-3"
+            >
+              Upgrade to Unlock
+              <ArrowRight className="w-5 h-5" />
+            </a>
+
+            <p className="mt-6 text-sm text-readable-light italic">
+              Available on Standard and Premium plans.
+            </p>
           </motion.div>
+        ) : (
+          <>
+            {/* Page Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 sm:mb-8"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-1 sm:mb-2">
+                    Analytics Dashboard
+                  </h1>
+                  <p className="text-readable-muted text-sm sm:text-base md:text-lg">
+                    Track your learning progress and optimize your study strategy
+                  </p>
+                </div>
+
+                <TimeRangeSelector
+                  onTimeRangeChange={updateTimeRange}
+                  loading={loading}
+                />
+              </div>
+            </motion.div>
+
+            {/* Usage Tracker */}
+            {subscription && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="mb-8"
+              >
+                <UsageTracker
+                  uploadsRemaining={subscription.uploads_allowed - subscription.uploads_used}
+                  uploadsTotal={subscription.uploads_allowed}
+                  examsRemaining={subscription.exams_allowed - subscription.exams_used}
+                  examsTotal={subscription.exams_allowed}
+                  expiryDate={subscription.sub_end_date || ''}
+                  loading={subLoading}
+                />
+              </motion.div>
+            )}
+
+            {/* Main Dashboard */}
+            <AnalyticsDashboard
+              analyticsData={analyticsData}
+              performanceData={performanceData}
+              knowledgeGaps={knowledgeGaps}
+              masteryAreas={masteryAreas}
+              recommendations={recommendations}
+              loading={loading}
+            />
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+              className="mt-8"
+            >
+              <QuickActions onRefresh={refetch} />
+            </motion.div>
+          </>
         )}
-
-        {/* Main Dashboard */}
-        <AnalyticsDashboard
-          analyticsData={analyticsData}
-          performanceData={performanceData}
-          knowledgeGaps={knowledgeGaps}
-          masteryAreas={masteryAreas}
-          recommendations={recommendations}
-          loading={loading}
-        />
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-          className="mt-8"
-        >
-          <QuickActions onRefresh={refetch} />
-        </motion.div>
       </div>
     </div>
   )

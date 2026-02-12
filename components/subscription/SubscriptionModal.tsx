@@ -13,6 +13,7 @@ interface PlanProps {
     icon: React.ElementType
     color: string
     recommended?: boolean
+    current?: boolean
     onSelect: () => void
 }
 
@@ -25,18 +26,26 @@ const PlanCard = ({
     icon: Icon,
     color,
     recommended,
+    current,
     onSelect
 }: PlanProps) => (
     <motion.div
         whileHover={{ y: -5 }}
         className={`relative p-8 rounded-3xl glass glass-hover border-2 ${recommended ? 'border-primary shadow-glow' : 'border-transparent'
-            }`}
+            } ${current ? 'ring-2 ring-green-500' : ''}`}
     >
-        {recommended && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">
-                Most Popular
-            </div>
-        )}
+        <div className="absolute -top-4 left-0 right-0 flex justify-center gap-2 px-4 pointer-events-none">
+            {recommended && (
+                <div className="bg-primary text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg whitespace-nowrap pointer-events-auto">
+                    Most Popular
+                </div>
+            )}
+            {current && (
+                <div className="bg-green-500 text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg whitespace-nowrap pointer-events-auto">
+                    Current Plan
+                </div>
+            )}
+        </div>
 
         <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center mb-6 shadow-lg`}>
             <Icon className="w-8 h-8 text-white" />
@@ -73,12 +82,15 @@ const PlanCard = ({
 
         <button
             onClick={onSelect}
-            className={`w-full py-4 rounded-xl font-bold transition-all duration-300 ${recommended
+            disabled={current}
+            className={`w-full py-4 rounded-xl font-bold transition-all duration-300 ${current
+                ? 'bg-green-500/20 text-green-600 cursor-not-allowed'
+                : recommended
                     ? 'bg-primary text-white shadow-glow hover:opacity-90'
                     : 'bg-readable/5 hover:bg-readable/10 text-readable'
                 }`}
         >
-            {price === 'Free' ? 'Current Plan' : 'Upgrade Now'}
+            {current ? 'Current Plan' : price === 'Free' ? 'Downgrade' : 'Upgrade Now'}
         </button>
     </motion.div>
 )
@@ -87,9 +99,10 @@ interface SubscriptionModalProps {
     isOpen: boolean
     onClose: () => void
     onUpgrade: (plan: string) => void
+    currentPlanTier?: string
 }
 
-export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionModalProps) => {
+export const SubscriptionModal = ({ isOpen, onClose, onUpgrade, currentPlanTier }: SubscriptionModalProps) => {
     const plans = [
         {
             name: 'Free Mode',
@@ -98,7 +111,8 @@ export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionMo
             exams: 2,
             icon: Zap,
             color: 'from-blue-500 to-indigo-600',
-            features: ['Basic AI Analysis', 'Standard Support']
+            features: ['Basic AI Analysis', 'Standard Support'],
+            tier: 'free'
         },
         {
             name: 'Standard',
@@ -108,7 +122,8 @@ export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionMo
             icon: Rocket,
             color: 'from-purple-500 to-pink-600',
             recommended: true,
-            features: ['Priority Generation', 'Expanded Question Bank', 'Performance Tracking']
+            features: ['Priority Generation', 'Expanded Question Bank', 'Performance Tracking'],
+            tier: 'standard'
         },
         {
             name: 'Premium',
@@ -117,7 +132,8 @@ export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionMo
             exams: 15,
             icon: Crown,
             color: 'from-amber-500 to-orange-600',
-            features: ['Unlimited History', 'Personalized AI Coach', 'Early Access To Features']
+            features: ['Unlimited History', 'Personalized AI Coach', 'Early Access To Features'],
+            tier: 'premium'
         }
     ]
 
@@ -146,7 +162,7 @@ export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionMo
                             <X className="w-6 h-6" />
                         </button>
 
-                        <div className="p-8 md:p-16">
+                        <div className="p-8 md:p-16 overflow-y-auto max-h-[90vh]">
                             <div className="text-center mb-12">
                                 <h2 className="text-3xl md:text-5xl font-black mb-4 gradient-text">Choose Your Path</h2>
                                 <p className="text-readable-muted max-w-xl mx-auto">
@@ -159,6 +175,7 @@ export const SubscriptionModal = ({ isOpen, onClose, onUpgrade }: SubscriptionMo
                                     <PlanCard
                                         key={plan.name}
                                         {...plan}
+                                        current={currentPlanTier === plan.tier}
                                         onSelect={() => onUpgrade(plan.name)}
                                     />
                                 ))}

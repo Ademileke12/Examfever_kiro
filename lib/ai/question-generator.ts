@@ -12,11 +12,11 @@ import { extractTopics } from '@/lib/questions/topic-extractor'
 import { getAvailableModels, GENERATION_CONFIG } from './config'
 import { generateId } from '@/lib/utils'
 import { questionDeduplicator } from './question-deduplicator'
-import { 
-  Question, 
-  QuestionGenerationRequest, 
+import {
+  Question,
+  QuestionGenerationRequest,
   QuestionGenerationResponse,
-  GenerationMetadata 
+  GenerationMetadata
 } from '@/lib/questions/types'
 
 export class QuestionGenerator {
@@ -29,7 +29,7 @@ export class QuestionGenerator {
     if (process.env.FIREWORKS_API_KEY) {
       this.fireworksClient = new FireworksClient(process.env.FIREWORKS_API_KEY)
     }
-    
+
     // Initialize Xroute client if API key is available
     if (process.env.XROUTE_API_KEY) {
       this.xrouteClient = new XrouteClient()
@@ -38,24 +38,17 @@ export class QuestionGenerator {
 
   async generateQuestions(request: QuestionGenerationRequest): Promise<QuestionGenerationResponse> {
     const startTime = Date.now()
-    
+
     try {
       // Ensure minimum question count for better results
-      const minQuestions = Math.max(request.maxQuestions, 20) // Always generate at least 20 questions
-      const adjustedRequest = { ...request, maxQuestions: minQuestions }
-      
-      console.log(`🎯 Generating ${minQuestions} questions (requested: ${request.maxQuestions})`)
-      
-      // For external APIs, use buffer system to ensure we get enough questions
-      const useExternalAPI = this.availableModels[0]?.name !== 'enhanced-local-generator'
-      const targetQuestions = useExternalAPI ? minQuestions : request.maxQuestions
-      const finalRequest = { ...request, maxQuestions: targetQuestions }
-      
-      console.log(`🎯 Target: ${targetQuestions} questions (external API: ${useExternalAPI})`)
-      
+      const targetQuestions = Math.max(request.maxQuestions, 40) // Always generate exactly 40 questions
+      const adjustedRequest = { ...request, maxQuestions: targetQuestions }
+
+      console.log(`🎯 Generating exactly ${targetQuestions} questions`)
+
       // Preprocess content
-      const processedContent = preprocessContent(finalRequest.content)
-      
+      const processedContent = preprocessContent(adjustedRequest.content)
+
       if (processedContent.length < 100) {
         return {
           success: false,
@@ -67,7 +60,7 @@ export class QuestionGenerator {
 
       // Extract topics if not provided
       const contentAnalysis = extractTopics(processedContent)
-      const topics = finalRequest.topics || contentAnalysis.topics
+      const topics = adjustedRequest.topics || contentAnalysis.topics
 
       // Chunk content for processing
       const chunks = chunkContent(processedContent)
@@ -75,23 +68,23 @@ export class QuestionGenerator {
       let totalGenerated = 0
       let passedValidation = 0
 
-      // Process each chunk - only generate multiple-choice questions
+      // Process each chunk - generate multiple-choice questions
       for (const chunk of chunks) {
         const chunkQuestions = await this.generateMultipleChoiceQuestionsFromChunk(
           chunk.text,
-          finalRequest,
+          adjustedRequest,
           topics
         )
-        
+
         totalGenerated += chunkQuestions.length
-        
+
         // Validate questions
         const qualityThreshold = this.availableModels[0]?.name === 'enhanced-local-generator' ? 0.5 : GENERATION_CONFIG.minQuestionQuality
         const validQuestions = filterHighQualityQuestions(
-          chunkQuestions, 
+          chunkQuestions,
           qualityThreshold
         )
-        
+
         passedValidation += validQuestions.length
         allQuestions.push(...validQuestions)
 
@@ -105,10 +98,10 @@ export class QuestionGenerator {
       if (allQuestions.length < targetQuestions) {
         const shortfall = targetQuestions - allQuestions.length
         console.warn(`⚠️ Still ${shortfall} questions short, generating additional questions`)
-        
+
         const additionalQuestions = this.generateMockMultipleChoiceQuestions(
           processedContent,
-          finalRequest.difficulty,
+          adjustedRequest.difficulty,
           shortfall
         )
         allQuestions.push(...additionalQuestions)
@@ -119,13 +112,13 @@ export class QuestionGenerator {
       // Apply advanced deduplication for all models
       console.log(`🔍 DEDUPLICATION ANALYSIS:`)
       console.log(`Before deduplication: ${allQuestions.length} questions`)
-      
+
       const deduplicationResult = questionDeduplicator.deduplicateQuestions(allQuestions)
       console.log(`After deduplication: ${deduplicationResult.uniqueQuestions.length} unique questions, ${deduplicationResult.duplicatesRemoved} duplicates removed`)
 
       // Return the requested number of questions (or all if less than requested)
-      const finalQuestions = deduplicationResult.uniqueQuestions.slice(0, request.maxQuestions)
-      
+      const finalQuestions = deduplicationResult.uniqueQuestions.slice(0, targetQuestions)
+
       const processingTime = Date.now() - startTime
       const metadata: GenerationMetadata = {
         totalQuestions: finalQuestions.length,
@@ -170,29 +163,29 @@ export class QuestionGenerator {
   ): Promise<Question[]> {
     // Split content into distinct sections to ensure diversity
     const contentSections = this.splitContentIntoSections(content)
-    
+
     // Increase batch size and add buffer to ensure we get enough questions
     const targetQuestions = request.maxQuestions
     const questionsPerBatch = Math.max(8, Math.ceil(targetQuestions / 3)) // Larger batches
     const maxBatches = Math.ceil((targetQuestions * 1.5) / questionsPerBatch) // 50% buffer
     const allQuestions: Question[] = []
-    
+
     console.log(`🎯 TARGET: ${targetQuestions} questions, using ${questionsPerBatch} per batch, max ${maxBatches} batches`)
-    
+
     for (let batch = 0; batch < maxBatches && allQuestions.length < targetQuestions; batch++) {
       try {
         const remainingNeeded = targetQuestions - allQuestions.length
         const batchSize = Math.min(questionsPerBatch, remainingNeeded + 3) // Add small buffer per batch
-        
+
         console.log(`Generating batch ${batch + 1}/${maxBatches} (${batchSize} multiple-choice questions)...`)
         console.log(`Current progress: ${allQuestions.length}/${targetQuestions} questions`)
-        
+
         // Use different content sections for each batch to ensure diversity
         const sectionIndex = batch % contentSections.length
         const sectionContent = contentSections[sectionIndex] || content
-        
+
         console.log(`Using content section ${sectionIndex + 1}/${contentSections.length} for batch ${batch + 1}`)
-        
+
         // Generate only multiple-choice questions with retry logic
         const batchQuestions = await this.generateMultipleChoiceQuestionBatchWithRetry(
           sectionContent,
@@ -200,11 +193,11 @@ export class QuestionGenerator {
           batchSize,
           3 // max retries
         )
-        
+
         allQuestions.push(...batchQuestions)
         console.log(`Batch ${batch + 1} completed: ${batchQuestions.length} multiple-choice questions generated`)
         console.log(`Total progress: ${allQuestions.length}/${targetQuestions} questions`)
-        
+
         // Continue until we have enough questions
         if (allQuestions.length >= targetQuestions) {
           console.log(`✅ Target reached: ${allQuestions.length} questions generated`)
@@ -220,10 +213,10 @@ export class QuestionGenerator {
     if (allQuestions.length < targetQuestions) {
       const shortfall = targetQuestions - allQuestions.length
       console.warn(`⚠️ Shortfall detected: ${shortfall} questions missing, generating fallback questions`)
-      
+
       const fallbackQuestions = this.generateMockMultipleChoiceQuestions(
-        content, 
-        request.difficulty, 
+        content,
+        request.difficulty,
         shortfall
       )
       allQuestions.push(...fallbackQuestions)
@@ -235,10 +228,10 @@ export class QuestionGenerator {
   private splitContentIntoSections(content: string): string[] {
     // Split content into logical sections for better question diversity
     const sections: string[] = []
-    
+
     // Try to split by paragraphs first
     const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim().length > 100)
-    
+
     if (paragraphs.length >= 3) {
       // If we have enough paragraphs, use them as sections
       sections.push(...paragraphs)
@@ -246,7 +239,7 @@ export class QuestionGenerator {
       // Otherwise, split by sentences into chunks
       const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 50)
       const chunkSize = Math.ceil(sentences.length / 3) // Aim for 3 sections
-      
+
       for (let i = 0; i < sentences.length; i += chunkSize) {
         const chunk = sentences.slice(i, i + chunkSize).join('. ').trim()
         if (chunk.length > 100) {
@@ -254,12 +247,12 @@ export class QuestionGenerator {
         }
       }
     }
-    
+
     // Ensure we have at least one section
     if (sections.length === 0) {
       sections.push(content)
     }
-    
+
     console.log(`Split content into ${sections.length} sections for diverse question generation`)
     return sections
   }
@@ -271,17 +264,17 @@ export class QuestionGenerator {
     maxRetries: number = 3
   ): Promise<Question[]> {
     let lastError: Error | null = null
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`🔄 Attempt ${attempt}/${maxRetries} for batch of ${batchSize} questions`)
-        
+
         const questions = await this.generateMultipleChoiceQuestionBatch(
           content,
           difficulties,
           batchSize
         )
-        
+
         if (questions.length > 0) {
           console.log(`✅ Attempt ${attempt} successful: ${questions.length} questions generated`)
           return questions
@@ -291,14 +284,14 @@ export class QuestionGenerator {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
         console.warn(`❌ Attempt ${attempt} failed:`, lastError.message)
-        
+
         if (attempt < maxRetries) {
           console.log(`Retrying in 1 second...`)
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
     }
-    
+
     // All retries failed, generate fallback questions
     console.warn(`🚨 All ${maxRetries} attempts failed, generating fallback questions`)
     return this.generateMockMultipleChoiceQuestions(content, difficulties, batchSize)
@@ -311,12 +304,12 @@ export class QuestionGenerator {
   ): Promise<Question[]> {
     // Create a diversity-focused prompt specifically for multiple-choice questions
     const multipleChoicePrompt = this.createMultipleChoiceFocusedPrompt(content, difficulties, batchSize)
-    
+
     // Try each available model in order of priority
     for (const model of this.availableModels) {
       try {
         let response: string
-        
+
         // Add timeout for each model attempt
         const modelPromise = (async () => {
           switch (model.type) {
@@ -334,21 +327,21 @@ export class QuestionGenerator {
               } else {
                 throw new Error('Xroute client not available')
               }
-              
+
             case 'fireworks':
               if (this.fireworksClient) {
                 return await this.fireworksClient.generateContent(model, multipleChoicePrompt)
               } else {
                 throw new Error('Fireworks client not available')
               }
-              
+
             case 'groq':
               if (await groqClient.isAvailable()) {
                 return await groqClient.generateContent(multipleChoicePrompt, model.name)
               } else {
                 throw new Error('Groq client not available')
               }
-              
+
             case 'ollama':
               if (model.name === 'enhanced-local-generator') {
                 // Use enhanced local generation for multiple-choice only
@@ -358,7 +351,7 @@ export class QuestionGenerator {
               } else {
                 throw new Error('Ollama client not available')
               }
-              
+
             default:
               throw new Error(`Unsupported model type: ${model.type}`)
           }
@@ -366,8 +359,8 @@ export class QuestionGenerator {
 
         // Add timeout for each model attempt
         const timeoutDuration = model.type === 'xroute' ? 120000 : model.type === 'fireworks' ? 20000 : 30000
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error(`Model ${model.name} timeout after ${timeoutDuration/1000}s`)), timeoutDuration)
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Model ${model.name} timeout after ${timeoutDuration / 1000}s`)), timeoutDuration)
         )
 
         response = await Promise.race([modelPromise, timeoutPromise])
@@ -386,7 +379,7 @@ export class QuestionGenerator {
         const diversityScore = this.calculateBatchDiversity(questions)
         console.log(`📊 BATCH DIVERSITY ANALYSIS:`)
         console.log(`Batch diversity score: ${(diversityScore * 100).toFixed(1)}%`)
-        
+
         if (diversityScore < 0.7) {
           console.warn(`🚨 LOW DIVERSITY DETECTED (${(diversityScore * 100).toFixed(1)}%)`)
           console.warn(`Trying next model for better diversity...`)
@@ -412,7 +405,7 @@ export class QuestionGenerator {
     difficulties: any[],
     batchSize: number
   ): string {
-    return `You are an expert educational content creator. Generate ${batchSize} COMPLETELY UNIQUE and DIVERSE multiple-choice questions from the content below.
+    return `You are an expert educational content creator. Generate ${batchSize} COMPLETELY UNIQUE, DIVERSE, and HIGH-QUALITY multiple-choice questions from the content below.
 
 MANDATORY DIVERSITY REQUIREMENTS:
 🎯 Each question MUST test a different concept, process, or detail from the content
@@ -468,17 +461,17 @@ CRITICAL RULES:
   ): Question[] {
     try {
       console.log(`🔍 Parsing AI response (${response.length} characters)`)
-      
+
       // Clean the response to extract JSON
       let cleanResponse = response.trim()
-      
+
       // Remove markdown code blocks if present
       if (cleanResponse.startsWith('```json')) {
         cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '')
       } else if (cleanResponse.startsWith('```')) {
         cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '')
       }
-      
+
       // Try to find JSON array in the response if it's not at the start
       if (!cleanResponse.startsWith('[')) {
         const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/)
@@ -486,7 +479,7 @@ CRITICAL RULES:
           cleanResponse = jsonMatch[0]
         }
       }
-      
+
       // Remove JavaScript-style comments that break JSON parsing
       // Remove single-line comments: // comment
       cleanResponse = cleanResponse.replace(/\/\/[^\n\r]*/g, '')
@@ -496,9 +489,9 @@ CRITICAL RULES:
       cleanResponse = cleanResponse.replace(/,\s*([}\]])/g, '$1')
       // Clean up any double commas
       cleanResponse = cleanResponse.replace(/,\s*,/g, ',')
-      
+
       console.log(`📝 Cleaned response preview: ${cleanResponse.substring(0, 200)}...`)
-      
+
       // Parse JSON with better error handling
       let rawQuestions
       try {
@@ -508,25 +501,25 @@ CRITICAL RULES:
         console.warn('Raw response preview:', response.substring(0, 500))
         return this.generateMockMultipleChoiceQuestions(content, difficulties, 5)
       }
-      
+
       if (!Array.isArray(rawQuestions)) {
         console.warn('❌ Response is not an array:', typeof rawQuestions)
         return this.generateMockMultipleChoiceQuestions(content, difficulties, 5)
       }
-      
+
       if (rawQuestions.length === 0) {
         console.warn('❌ Empty questions array received')
         return this.generateMockMultipleChoiceQuestions(content, difficulties, 5)
       }
-      
+
       console.log(`📊 Processing ${rawQuestions.length} raw questions from AI`)
-      
+
       // Convert to our Question format - only multiple-choice
       const questions: Question[] = []
-      
+
       for (let i = 0; i < rawQuestions.length; i++) {
         const raw = rawQuestions[i]
-        
+
         try {
           // Validate required fields with more lenient checking
           const questionText = raw.question || raw.text || raw.questionText
@@ -534,18 +527,18 @@ CRITICAL RULES:
             console.warn(`⚠️ Question ${i + 1} missing question text, skipping`)
             continue
           }
-          
+
           // Check for options with more flexible validation
           let options = raw.options || raw.answers || raw.choices
           if (!options || !Array.isArray(options)) {
             console.warn(`⚠️ Question ${i + 1} missing options array, skipping`)
             continue
           }
-          
+
           // If we don't have exactly 4 options, try to fix it
           if (options.length !== 4) {
             console.warn(`⚠️ Question ${i + 1} has ${options.length} options instead of 4, attempting to fix`)
-            
+
             if (options.length > 4) {
               // Take first 4 options
               options = options.slice(0, 4)
@@ -559,16 +552,16 @@ CRITICAL RULES:
               }
             }
           }
-          
+
           // Ensure at least one correct answer exists
           const hasCorrectAnswer = options.some((opt: any) => opt.correct || opt.isCorrect)
           if (!hasCorrectAnswer) {
             console.warn(`⚠️ Question ${i + 1} has no correct answer, marking first option as correct`)
             options[0].correct = true
           }
-          
+
           const questionId = generateId()
-          
+
           questions.push({
             id: questionId,
             type: 'multiple-choice',
@@ -593,16 +586,16 @@ CRITICAL RULES:
               contentHash: `mc-${Date.now()}-${i}`
             }
           })
-          
+
           console.log(`✅ Successfully parsed question ${i + 1}: "${questionText.substring(0, 50)}..."`)
         } catch (questionError) {
           console.warn(`❌ Failed to parse question ${i + 1}:`, questionError)
         }
       }
-      
+
       console.log(`📈 Successfully parsed ${questions.length}/${rawQuestions.length} questions`)
       return questions
-      
+
     } catch (error) {
       console.warn('❌ Failed to parse multiple-choice response:', error)
       console.warn('Response preview:', response.substring(0, 500))
@@ -616,15 +609,15 @@ CRITICAL RULES:
     batchSize: number
   ): Promise<string> {
     console.log(`🚀 Using ENHANCED local multiple-choice generation for ${batchSize} questions...`)
-    
+
     // Advanced content analysis for intelligent question generation
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 30)
     const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim().length > 50)
     const words = content.toLowerCase().match(/\b[a-z]{3,}\b/g) || []
-    
+
     // Extract key terms, excluding common words
     const stopWords = new Set([
-      'that', 'this', 'with', 'from', 'they', 'have', 'been', 'were', 'will', 'would', 'could', 'should', 
+      'that', 'this', 'with', 'from', 'they', 'have', 'been', 'were', 'will', 'would', 'could', 'should',
       'when', 'where', 'what', 'which', 'while', 'there', 'their', 'these', 'those', 'include', 'includes',
       'such', 'also', 'many', 'more', 'most', 'some', 'other', 'than', 'only', 'like', 'used', 'using',
       'make', 'made', 'well', 'work', 'works', 'system', 'systems', 'can', 'may', 'might', 'must', 'shall',
@@ -632,23 +625,23 @@ CRITICAL RULES:
       'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old', 'see', 'two', 'way',
       'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'
     ])
-    
+
     const keyTerms = Array.from(new Set(words))
       .filter(word => word.length > 3 && !stopWords.has(word))
       .slice(0, 50) // More terms for better variety
-    
+
     // Extract important concepts and definitions
     const concepts = this.extractConcepts(content)
     const definitions = this.extractDefinitions(content)
     const processes = this.extractProcesses(content)
-    
+
     const questions = []
-    
+
     // Generate diverse question types
     for (let i = 0; i < batchSize; i++) {
       const difficulty = difficulties[i % difficulties.length] || 'medium'
       const questionType = i % 4 // Rotate through 4 question types
-      
+
       let question
       switch (questionType) {
         case 0: // Definition questions
@@ -666,10 +659,10 @@ CRITICAL RULES:
         default:
           question = this.generateDefinitionQuestion(concepts, keyTerms, i, difficulty)
       }
-      
+
       questions.push(question)
     }
-    
+
     console.log(`✅ Generated ${questions.length} intelligent local questions with high diversity`)
     return JSON.stringify(questions)
   }
@@ -682,7 +675,7 @@ CRITICAL RULES:
       /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+means/g,
       /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+involves/g
     ]
-    
+
     const concepts = new Set<string>()
     conceptPatterns.forEach(pattern => {
       let match
@@ -692,14 +685,14 @@ CRITICAL RULES:
         }
       }
     })
-    
+
     return Array.from(concepts).slice(0, 20)
   }
 
-  private extractDefinitions(content: string): Array<{term: string, definition: string}> {
-    const definitions: Array<{term: string, definition: string}> = []
+  private extractDefinitions(content: string): Array<{ term: string, definition: string }> {
+    const definitions: Array<{ term: string, definition: string }> = []
     const sentences = content.split(/[.!?]+/)
-    
+
     sentences.forEach(sentence => {
       const definitionMatch = sentence.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+is\s+(.+)/)
       if (definitionMatch && definitionMatch[1] && definitionMatch[2] && definitionMatch[2].length > 20) {
@@ -709,7 +702,7 @@ CRITICAL RULES:
         })
       }
     })
-    
+
     return definitions.slice(0, 10)
   }
 
@@ -717,15 +710,15 @@ CRITICAL RULES:
     // Look for process indicators
     const processWords = ['process', 'method', 'approach', 'technique', 'procedure', 'algorithm', 'workflow']
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 30)
-    
-    return sentences.filter(sentence => 
+
+    return sentences.filter(sentence =>
       processWords.some(word => sentence.toLowerCase().includes(word))
     ).slice(0, 10)
   }
 
   private generateDefinitionQuestion(concepts: string[], keyTerms: string[], index: number, difficulty: string) {
     const concept = concepts[index % concepts.length] || keyTerms[index % keyTerms.length] || `concept${index}`
-    
+
     return {
       type: 'multiple-choice',
       difficulty: difficulty,
@@ -745,7 +738,7 @@ CRITICAL RULES:
   private generateProcessQuestion(processes: string[], sentences: string[], index: number, difficulty: string) {
     const process = processes[index % processes.length] || sentences[index % sentences.length] || 'the main process'
     const processName = `Process ${index + 1}`
-    
+
     return {
       type: 'multiple-choice',
       difficulty: difficulty,
@@ -765,7 +758,7 @@ CRITICAL RULES:
   private generateComparisonQuestion(keyTerms: string[], content: string, index: number, difficulty: string) {
     const term1 = keyTerms[index % keyTerms.length] || `element${index}`
     const term2 = keyTerms[(index + 1) % keyTerms.length] || `component${index}`
-    
+
     return {
       type: 'multiple-choice',
       difficulty: difficulty,
@@ -784,7 +777,7 @@ CRITICAL RULES:
 
   private generateApplicationQuestion(concepts: string[], keyTerms: string[], index: number, difficulty: string) {
     const concept = concepts[index % concepts.length] || keyTerms[index % keyTerms.length] || `principle${index}`
-    
+
     return {
       type: 'multiple-choice',
       difficulty: difficulty,
@@ -807,7 +800,7 @@ CRITICAL RULES:
     batchSize: number
   ): Question[] {
     console.log(`🚀 Generating ${batchSize} highly diverse mock multiple-choice questions as fallback...`)
-    
+
     const questions: Question[] = []
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 30)
     const words = content.toLowerCase().match(/\b[a-z]{3,}\b/g) || []
@@ -818,7 +811,7 @@ CRITICAL RULES:
     // Extract concepts and processes for better question generation
     const concepts = this.extractConcepts(content)
     const processes = this.extractProcesses(content)
-    
+
     // Highly diverse question templates with unique identifiers
     const questionTemplates = [
       {
@@ -922,20 +915,20 @@ CRITICAL RULES:
         category: "interaction"
       }
     ]
-    
+
     // Generate questions with maximum diversity using enhanced templates
     const usedCombinations = new Set<string>()
     const questionTypes = ['definition', 'process', 'comparison', 'application', 'purpose', 'characteristics', 'context', 'distinction', 'optimization', 'interaction']
-    
+
     for (let i = 0; i < batchSize; i++) {
       const difficulty = difficulties[i % difficulties.length] || 'medium'
       const questionType = questionTypes[i % questionTypes.length]
-      
+
       // Select term and template with uniqueness guarantee
       let keyTerm = keyTerms[i % keyTerms.length] || concepts[i % concepts.length] || `element${i}`
       let templateIndex = i % questionTemplates.length
       let template = questionTemplates[templateIndex] || questionTemplates[0]
-      
+
       // Ensure template exists with absolute fallback
       if (!template) {
         template = {
@@ -949,7 +942,7 @@ CRITICAL RULES:
           category: "definition"
         }
       }
-      
+
       // Ensure unique combination by adding more variation
       let combinationKey = `${keyTerm}-${template.category}-${questionType}-${i}`
       let attempts = 0
@@ -963,20 +956,20 @@ CRITICAL RULES:
         combinationKey = `${keyTerm}-${template.category}-${questionType}-${i + attempts}`
         attempts++
       }
-      
+
       // If still not unique, add timestamp for absolute uniqueness
       if (usedCombinations.has(combinationKey)) {
         combinationKey = `${combinationKey}-${Date.now()}-${Math.random()}`
       }
-      
+
       usedCombinations.add(combinationKey)
-      
+
       const sentence = sentences[i % sentences.length] || content.substring(0, 200)
       const questionId = generateId()
-      
+
       // Create question text with unique context and variation
       let questionText = template.template.replace('{term}', keyTerm)
-      
+
       // Add variation to question text for higher indices
       if (i >= 10) {
         const variations = [
@@ -987,32 +980,32 @@ CRITICAL RULES:
         ]
         questionText = variations[i % variations.length] || questionText
       }
-      
+
       // Create correct answer with variation
       let correctAnswer = template.correctTemplate.replace('{term}', keyTerm)
       if (i >= 15) {
         correctAnswer += ` as outlined in the content`
       }
-      
+
       // Create wrong answers with more variation
       const wrongAnswers = template.wrongTemplates.map((tmpl, idx) => {
         let answer = tmpl.replace('{term}', keyTerm)
         if (i >= 10) {
-          const suffixes = [` (alternative ${Math.floor(i/3)})`, ` (scenario ${Math.floor(i/4)})`, ` (case ${Math.floor(i/5)})`]
+          const suffixes = [` (alternative ${Math.floor(i / 3)})`, ` (scenario ${Math.floor(i / 4)})`, ` (case ${Math.floor(i / 5)})`]
           answer += suffixes[idx % suffixes.length]
         }
         return answer
       })
-      
+
       // Create options with randomized order
       const allOptions = [
         { text: correctAnswer, isCorrect: true },
         ...wrongAnswers.map(text => ({ text, isCorrect: false }))
       ]
-      
+
       // Shuffle options
       const shuffledOptions = [...allOptions].sort(() => Math.random() - 0.5)
-      
+
       questions.push({
         id: questionId,
         type: 'multiple-choice',
@@ -1038,17 +1031,17 @@ CRITICAL RULES:
         }
       })
     }
-    
+
     console.log(`✅ Generated ${questions.length} highly diverse mock questions using ${usedCombinations.size} unique combinations`)
     return questions
   }
 
   private calculateBatchDiversity(questions: Question[]): number {
     if (questions.length < 2) return 1.0
-    
+
     let totalSimilarity = 0
     let comparisons = 0
-    
+
     // Compare each question with every other question
     for (let i = 0; i < questions.length; i++) {
       for (let j = i + 1; j < questions.length; j++) {
@@ -1061,16 +1054,16 @@ CRITICAL RULES:
         }
       }
     }
-    
+
     const averageSimilarity = comparisons > 0 ? totalSimilarity / comparisons : 0
     const diversityScore = 1 - averageSimilarity // Higher diversity = lower similarity
-    
+
     return Math.max(0, Math.min(1, diversityScore))
   }
 
   private calculateAverageScore(questions: Question[]): number {
     if (questions.length === 0) return 0
-    
+
     const scores = questions.map(q => validateQuestion(q).score)
     return scores.reduce((sum, score) => sum + score, 0) / scores.length
   }
@@ -1097,7 +1090,7 @@ CRITICAL RULES:
 
   async getModelStatus(): Promise<Record<string, boolean>> {
     const status: Record<string, boolean> = {}
-    
+
     for (const model of this.availableModels) {
       switch (model.type) {
         case 'groq':
@@ -1110,7 +1103,7 @@ CRITICAL RULES:
           status[model.name] = false
       }
     }
-    
+
     return status
   }
 

@@ -142,12 +142,14 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         title,
         description: description || '',
-        source_file_ids: bundleIds,
-        bundle_context: {
-          bundleIds,
-          bundleDistribution,
-          bundleNames: bundleData.map(b => b.bundle_name),
-          totalQuestions: finalQuestions.length
+        settings: {
+          source_file_ids: bundleIds,
+          bundle_context: {
+            bundleIds,
+            bundleDistribution,
+            bundleNames: bundleData.map(b => b.bundle_name),
+            totalQuestions: finalQuestions.length
+          }
         },
         time_limit_minutes: timeLimitMinutes,
         total_questions: finalQuestions.length,

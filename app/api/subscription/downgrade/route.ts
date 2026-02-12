@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
                 sub_end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString(), // 10 years
                 is_active: true,
                 updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'user_id'
             })
 
         if (updateError) {

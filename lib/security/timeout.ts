@@ -40,6 +40,6 @@ export async function withTimeout<T>(
 export const Timeouts = {
     FAST: 5000,      // 5 seconds
     NORMAL: 30000,   // 30 seconds
-    SLOW: 60000,     // 60 seconds
-    DRAG: 120000     // 120 seconds (2 minutes, e.g., for complex PDF processing)
+    SLOW: 180000,    // 180 seconds (3 minutes) - Increased for 40-question generation
+    DRAG: 300000     // 300 seconds (5 minutes)
 }

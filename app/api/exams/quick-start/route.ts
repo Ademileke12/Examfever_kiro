@@ -77,11 +77,11 @@ export async function POST(request: NextRequest) {
       index === self.findIndex(q => q.id === question.id)
     )
 
-    console.log(`Quick-start exam: Using all ${uniqueQuestions.length} questions from bundle ${bundleData.name}`)
+    console.log(`Quick-start exam: Using all ${uniqueQuestions.length} questions from bundle ${bundleData.bundle_name}`)
 
     // Create exam record with all questions
     const examId = generateId()
-    const examTitle = `${bundleData.name} - Full Test`
+    const examTitle = `${bundleData.bundle_name} - Full Test`
 
     const { data: examData, error: examError } = await supabase
       .from('exams')
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         id: examId,
         user_id: user.id,
         title: examTitle,
-        description: `Complete exam with all questions from ${bundleData.name}`,
+        description: `Complete exam with all questions from ${bundleData.bundle_name}`,
         // removed source_file_ids as it does not exist in schema
         settings: {
           source_file_ids: [bundleId],
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         title: examTitle,
         totalQuestions: uniqueQuestions.length,
         timeLimitMinutes: 60,
-        bundleName: bundleData.name
+        bundleName: bundleData.bundle_name
       }
     })
 

@@ -6,13 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Lock } from 'lucide-react'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export function Navbar() {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, signOut } = useAuth()
+  const { subscription } = useSubscription()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,15 +49,19 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-8">
-          {visibleNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-xs font-bold tracking-widest transition-colors hover:text-[#7C3AED] ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {visibleNavItems.map((item) => {
+            const isRestricted = item.href === '/analytics' && (!subscription || subscription.plan_tier === 'free')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-xs font-bold tracking-widest transition-colors hover:text-[#7C3AED] flex items-center gap-1.5 ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}
+              >
+                {item.label}
+                {isRestricted && <Lock size={12} className="text-amber-500" />}
+              </Link>
+            )
+          })}
         </div>
 
         {/* Actions */}
@@ -127,16 +133,20 @@ export function Navbar() {
               className="lg:hidden fixed top-20 left-0 right-0 bg-white dark:bg-[#111114] border-b dark:border-white/5 shadow-2xl z-50 max-h-[calc(100vh-5rem)] overflow-y-auto"
             >
               <div className="p-6 space-y-4">
-                {visibleNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-sm font-bold tracking-widest transition-colors ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'} hover:text-[#7C3AED]`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {visibleNavItems.map((item) => {
+                  const isRestricted = item.href === '/analytics' && (!subscription || subscription.plan_tier === 'free')
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between text-sm font-bold tracking-widest transition-colors ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'} hover:text-[#7C3AED]`}
+                    >
+                      {item.label}
+                      {isRestricted && <Lock size={14} className="text-amber-500" />}
+                    </Link>
+                  )
+                })}
                 <div className="pt-4 border-t dark:border-white/5 flex items-center justify-between">
                   <ThemeToggle />
                   {user ? (

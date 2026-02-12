@@ -111,7 +111,7 @@ export const GENERATION_CONFIG = {
   maxQuestionsPerChunk: 8, // increased from 5 to 8 for more questions per chunk
   minQuestionQuality: 0.7, // 0-1 scale
   retryAttempts: 3,
-  timeoutMs: 30000 // Reduced to 30 seconds to fail fast and use local generator
+  timeoutMs: 120000 // Increased to 120 seconds for robust multi-batch generation
 }
 
 export function getAvailableModels(): AIModelConfig[] {

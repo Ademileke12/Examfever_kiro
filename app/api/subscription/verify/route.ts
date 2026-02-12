@@ -84,9 +84,14 @@ export async function POST(request: NextRequest) {
                     sub_end_date: endDate.toISOString(),
                     is_active: true,
                     updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id'
                 })
 
-            if (subError) throw subError
+            if (subError) {
+                console.error('Subscription update error:', subError)
+                throw subError
+            }
 
         } else if (type === 'addon') {
             // Addon Logic
@@ -123,9 +128,14 @@ export async function POST(request: NextRequest) {
                     sub_end_date: currentSub?.sub_end_date || new Date().toISOString(),
                     is_active: true,
                     updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id'
                 })
 
-            if (subError) throw subError
+            if (subError) {
+                console.error('Addon update error:', subError)
+                throw subError
+            }
         }
 
         // 3. Log Transaction
@@ -140,14 +150,23 @@ export async function POST(request: NextRequest) {
                 metadata: paystackData.data
             })
 
-        if (txError) console.error('Transaction log error:', txError)
+        if (txError) {
+            console.error('Transaction log error:', txError)
+            // We don't necessarily want to fail the whole thing if just logging fails, 
+            // but for now let's keep it visible
+        }
 
         return NextResponse.json({ success: true })
 
-    } catch (error) {
-        console.error('Verification error:', error)
+    } catch (error: any) {
+        console.error('Verification error details:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+        })
         return NextResponse.json(
-            { success: false, error: 'Internal server error' },
+            { success: false, error: error.message || 'Internal server error' },
             { status: 500 }
         )
     }
