@@ -98,11 +98,14 @@ describe('Payment Verification API', () => {
         expect(body.success).toBe(true)
 
         // Check Update Logic
-        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            user_id: 'test-user-id',
-            uploads_allowed: 12, // 2 + 10
-            exams_allowed: 12    // 2 + 10
-        }))
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                user_id: 'test-user-id',
+                uploads_allowed: 12, // 2 + 10
+                exams_allowed: 12    // 2 + 10
+            }),
+            { onConflict: 'user_id' }
+        )
     })
 
 
@@ -145,11 +148,14 @@ describe('Payment Verification API', () => {
         expect(body.success).toBe(true)
 
         // Check Update Logic: 14 Uploads + 10 Exams
-        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            user_id: 'test-user-id',
-            uploads_allowed: 16, // 2 + 14
-            exams_allowed: 12    // 2 + 10
-        }))
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                user_id: 'test-user-id',
+                uploads_allowed: 16, // 2 + 14
+                exams_allowed: 12    // 2 + 10
+            }),
+            { onConflict: 'user_id' }
+        )
     })
 
     it('should verify Paystack transaction and update user subscription for Ultimate Bundle', async () => {
@@ -190,10 +196,13 @@ describe('Payment Verification API', () => {
         expect(body.success).toBe(true)
 
         // Check Update Logic: 20 Uploads + 20 Exams
-        expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({
-            user_id: 'test-user-id',
-            uploads_allowed: 30, // 10 + 20
-            exams_allowed: 30    // 10 + 20
-        }))
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                user_id: 'test-user-id',
+                uploads_allowed: 30, // 10 + 20
+                exams_allowed: 30    // 10 + 20
+            }),
+            { onConflict: 'user_id' }
+        )
     })
 })
