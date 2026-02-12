@@ -5,6 +5,7 @@ import { questionGenerator } from '@/lib/ai/question-generator'
 import { saveQuestions } from '@/lib/database/questions'
 import { QuestionGenerationRequest } from '@/lib/questions/types'
 import { withTimeout, Timeouts, TimeoutError } from '@/lib/security/timeout'
+import { checkSubscriptionLimit, incrementUsage } from '@/lib/security/limit-check'
 
 // Helper function to calculate difficulty distribution
 function calculateDifficultyDistribution(questions: any[]): Record<string, number> {
@@ -66,6 +67,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      )
+    }
+
+    // Check subscription limit BEFORE processing
+    const limitCheck = await checkSubscriptionLimit('upload')
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: limitCheck.error || 'Upload limit exceeded',
+          remaining: limitCheck.remaining,
+          total: limitCheck.total
+        },
+        { status: 403 }
       )
     }
 
@@ -193,6 +208,9 @@ export async function POST(request: NextRequest) {
         console.error('Bundle creation error:', bundleError)
       }
     }
+
+    // Increment usage counter after successful processing
+    await incrementUsage('upload')
 
     return NextResponse.json({
       success: true,
