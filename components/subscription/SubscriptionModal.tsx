@@ -99,7 +99,7 @@ interface SubscriptionModalProps {
     isOpen: boolean
     onClose: () => void
     onUpgrade: (plan: string) => void
-    currentPlanTier?: string
+    currentPlanTier?: string | undefined
 }
 
 export const SubscriptionModal = ({ isOpen, onClose, onUpgrade, currentPlanTier }: SubscriptionModalProps) => {
