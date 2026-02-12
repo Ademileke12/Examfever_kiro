@@ -192,3 +192,7 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Fix for Lazy Creation: Allow users to insert their own profile
+CREATE POLICY "Users can create own affiliate profile" ON affiliate_profiles
+    FOR INSERT WITH CHECK (auth.uid() = user_id);

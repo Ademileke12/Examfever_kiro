@@ -1,6 +1,5 @@
 'use client'
 
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { AddOnStore } from '@/components/subscription/AddOnStore'
 import { motion } from 'framer-motion'
@@ -11,7 +10,6 @@ export default function StorePage() {
         <ProtectedRoute>
             <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
                 <ParticleBackground />
-                <Navbar />
 
                 <div className="max-w-7xl mx-auto px-6 pt-24 pb-16">
                     <AddOnStore />

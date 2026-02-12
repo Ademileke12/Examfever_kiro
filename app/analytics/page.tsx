@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard'
 import { UsageTracker } from '@/components/subscription/UsageTracker'
@@ -38,7 +37,6 @@ export default function AnalyticsPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
         <ParticleBackground />
-        <Navbar />
         <div className="max-w-7xl mx-auto px-6 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -75,7 +73,6 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
       <ParticleBackground />
-      <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8">
         {isFreePlan ? (
           <motion.div

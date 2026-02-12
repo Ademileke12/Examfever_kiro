@@ -2,7 +2,6 @@
 
 import React, { Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal'
 
@@ -89,7 +88,6 @@ function SubscriptionContent() {
     return (
         <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
             <ParticleBackground />
-            <Navbar />
 
             <div className="max-w-7xl mx-auto px-6 pt-24 pb-16">
                 {/* Page Header */}

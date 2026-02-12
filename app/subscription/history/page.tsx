@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { createClient } from '@/lib/supabase/client'
@@ -48,7 +47,6 @@ export default function BillingHistoryPage() {
         <ProtectedRoute>
             <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
                 <ParticleBackground />
-                <Navbar />
 
                 <div className="relative z-10 pt-32 px-4 max-w-4xl mx-auto">
                     <div className="flex items-center gap-4 mb-8">

@@ -3,7 +3,6 @@
 import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Loader2, ShieldCheck, CreditCard, CheckCircle2 } from 'lucide-react'
@@ -158,7 +157,6 @@ function CheckoutContent() {
         <ProtectedRoute>
             <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
                 <ParticleBackground />
-                <Navbar />
 
                 <div className="relative z-10 pt-32 px-4 max-w-2xl mx-auto">
                     <div className="glass rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl">

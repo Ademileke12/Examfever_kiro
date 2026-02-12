@@ -96,7 +96,10 @@ export class AffiliateManager {
     /**
      * Award commission when a referred user pays for their first subscription
      */
-    async awardCommissionIfEligible(userId: string, amount: number, transactionRef: string) {
+    /**
+     * Award commission when a referred user pays for their first subscription
+     */
+    async awardCommissionIfEligible(userId: string, amount: number, transactionRef: string, req?: Request) {
         const supabase = await createClient()
 
         // 1. Check if user was referred
@@ -112,10 +115,44 @@ export class AffiliateManager {
             return null
         }
 
-        // 2. Calculate 13% commission
+        // 2. Anti-fraud checks (if request context available)
+        if (req) {
+            const { checkFraudRisk, getClientIP, getDeviceFingerprint, logFraudAttempt } = await import('@/lib/affiliate/fraud-detection')
+
+            const ipAddress = getClientIP(req)
+            const deviceId = getDeviceFingerprint(req)
+
+            const fraudCheck = await checkFraudRisk(
+                referral.referrer_id,
+                userId,
+                ipAddress,
+                deviceId
+            )
+
+            if (fraudCheck.isFraudulent) {
+                // Log and block
+                await logFraudAttempt(
+                    userId,
+                    'commission_blocked',
+                    ipAddress,
+                    deviceId,
+                    true,
+                    {
+                        reason: fraudCheck.reason,
+                        referrer_id: referral.referrer_id,
+                        transaction_ref: transactionRef
+                    }
+                )
+
+                console.warn(`Commission blocked due to fraud risk: ${fraudCheck.reason}`)
+                return null
+            }
+        }
+
+        // 3. Calculate 13% commission
         const commissionAmount = amount * 0.13
 
-        // 3. Update referral status to 'subscribed'
+        // 4. Update referral status to 'subscribed'
         const { error: updateError } = await supabase
             .from('referrals')
             .update({ status: 'subscribed' })
@@ -126,7 +163,7 @@ export class AffiliateManager {
             throw updateError
         }
 
-        // 4. Record commission
+        // 5. Record commission
         const { error: commError } = await supabase
             .from('affiliate_commissions')
             .insert({
@@ -134,7 +171,7 @@ export class AffiliateManager {
                 referral_id: referral.id,
                 amount: commissionAmount,
                 transaction_reference: transactionRef,
-                status: 'pending' // Usually starts as pending until verified or period passes
+                status: 'paid' // Instant payout to balance
             })
 
         if (commError) {
@@ -142,7 +179,7 @@ export class AffiliateManager {
             throw commError
         }
 
-        // 5. Instantly update referrer's balance (as per user request: "credited instantly")
+        // 6. Instantly update referrer's balance
         const { error: balanceError } = await supabase.rpc('update_affiliate_balance', {
             profile_user_id: referral.referrer_id,
             amount: commissionAmount

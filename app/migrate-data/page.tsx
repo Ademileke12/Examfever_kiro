@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { getUserId } from '@/lib/auth/user'
-import { Navbar } from '@/components/ui/Navbar'
 
 export default function MigrateDataPage() {
   const [migrating, setMigrating] = useState(false)
@@ -182,7 +181,6 @@ export default function MigrateDataPage() {
 
   return (
     <div style={styles.container}>
-      <Navbar />
       
       <div style={styles.content}>
         <div style={styles.card}>

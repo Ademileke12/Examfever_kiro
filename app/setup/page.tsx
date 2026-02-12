@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Navbar } from '@/components/ui/Navbar'
 import { Database, CheckCircle, XCircle, Copy, ExternalLink } from 'lucide-react'
 import { pageVariants } from '@/lib/animations/variants'
 
@@ -250,7 +249,6 @@ SELECT 'Database setup completed successfully!' as message;`
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <Navbar />
       
       <motion.div
         variants={pageVariants}

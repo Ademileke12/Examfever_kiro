@@ -136,3 +136,35 @@
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] font-black tracking-tight;
 }
+
+@layer utilities {
+  .animate-bounce-slow {
+    animation: bounce-slow 3s infinite;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .rotate-y-2 {
+    transform: rotateY(10deg);
+  }
+
+  .rotate-x-2 {
+    transform: rotateX(5deg);
+  }
+}
+
+@keyframes bounce-slow {
+
+  0%,
+  100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}

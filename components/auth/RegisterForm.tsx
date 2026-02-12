@@ -48,16 +48,36 @@ export function RegisterForm() {
     setError(null)
     setSuccess(false)
 
-    // Get referral code from cookie or local storage
+    // Get referral code from URL, cookie or local storage
     const getReferralCode = () => {
+      // 1. Check URL params first (highest priority)
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search)
+        const refFromUrl = urlParams.get('ref')
+        if (refFromUrl) {
+          // Update storage if found in URL
+          document.cookie = `referral_code=${refFromUrl}; path=/; max-age=2592000` // 30 days
+          localStorage.setItem('referral_code', refFromUrl)
+          return refFromUrl
+        }
+      }
+
+      // 2. Check cookie
       const match = document.cookie.match(/(?:^|; )referral_code=([^;]*)/)
-      return match ? match[1] : localStorage.getItem('referral_code')
+      if (match) return match[1]
+
+      // 3. Check local storage
+      return typeof window !== 'undefined' ? localStorage.getItem('referral_code') : null
     }
 
     const referralCode = getReferralCode() || undefined
     if (referralCode) {
       console.log('📝 Signing up with referral code:', referralCode)
     }
+
+    // Log device info for fraud detection (fire and forget)
+    // We do this via a separate API call or let the backend handle it
+    // For now, the backend will capture IP/headers on the auth request
 
     const { error } = await signUp({ ...data, referralCode })
 
@@ -69,6 +89,19 @@ export function RegisterForm() {
 
     setLoading(false)
   }
+
+  // Effect to capture referral code from URL on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const refFromUrl = urlParams.get('ref')
+      if (refFromUrl) {
+        console.log('🔗 Captured referral code from URL:', refFromUrl)
+        document.cookie = `referral_code=${refFromUrl}; path=/; max-age=2592000` // 30 days
+        localStorage.setItem('referral_code', refFromUrl)
+      }
+    }
+  }, [])
 
   if (success) {
     return (

@@ -3,7 +3,10 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Upload, ChevronDown, Brain, Timer, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
-import { AffiliateShowcase } from '@/components/landing/AffiliateShowcase'
+import { Testimonials } from "@/components/landing/Testimonials"
+import { FAQ } from "@/components/landing/FAQ"
+import { Footer } from "@/components/ui/Footer"
+import { AffiliateShowcase } from "@/components/landing/AffiliateShowcase"
 
 export default function Home() {
   const steps = [
@@ -119,6 +122,8 @@ export default function Home() {
         <span className="text-[10px] font-black tracking-[0.2em] text-[#9CA3AF] uppercase">Learn More</span>
         <ChevronDown className="w-5 h-5 text-[#9CA3AF]" />
       </div>
+
+      <Footer />
     </div>
   )
 }

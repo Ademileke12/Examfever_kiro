@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
             // Affiliate Logic: Award commission if user was referred
             try {
-                await affiliateManager.awardCommissionIfEligible(user.id, amountPaid, reference)
+                await affiliateManager.awardCommissionIfEligible(user.id, amountPaid, reference, request)
             } catch (affError) {
                 console.error('Affiliate commission awarding failed:', affError)
                 // We don't fail the verification if affiliate logic fails

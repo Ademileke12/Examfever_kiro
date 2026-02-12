@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import PDFUploadButton from '@/components/upload/PDFUploadButton'
 import PDFUploadZone from '@/components/upload/PDFUploadZone'
@@ -132,7 +131,6 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <ParticleBackground />
-      <Navbar />
 
       <motion.div
         variants={pageVariants}
