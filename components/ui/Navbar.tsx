@@ -109,35 +109,59 @@ export function Navbar() {
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="lg:hidden absolute top-20 left-0 right-0 bg-white dark:bg-[#111114] border-b dark:border-white/5 p-6 space-y-4"
-          >
-            {visibleNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block text-sm font-bold tracking-widest text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED]"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="pt-4 border-t dark:border-white/5 flex items-center justify-between">
-              <ThemeToggle />
-              {!user && (
-                <Link
-                  href="/login"
-                  className="text-sm font-bold text-[#6B7280]"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  LOG IN
-                </Link>
-              )}
-            </div>
-          </motion.div>
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Menu Content */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="lg:hidden fixed top-20 left-0 right-0 bg-white dark:bg-[#111114] border-b dark:border-white/5 shadow-2xl z-50 max-h-[calc(100vh-5rem)] overflow-y-auto"
+            >
+              <div className="p-6 space-y-4">
+                {visibleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block text-sm font-bold tracking-widest transition-colors ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'} hover:text-[#7C3AED]`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <div className="pt-4 border-t dark:border-white/5 flex items-center justify-between">
+                  <ThemeToggle />
+                  {user ? (
+                    <button
+                      onClick={() => {
+                        signOut()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="text-sm font-bold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED]"
+                    >
+                      LOG OUT
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="text-sm font-bold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED]"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      LOG IN
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>
