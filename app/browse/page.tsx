@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { FileText, Clock, Brain, TrendingUp, Calendar, Award } from 'lucide-react'
 import Link from 'next/link'
@@ -32,10 +31,10 @@ export default function BrowsePage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -47,10 +46,10 @@ export default function BrowsePage() {
     try {
       setLoading(true)
       const userId = getUserId()
-      
+
       const response = await fetch(`/api/exam-results?userId=${userId}&limit=50`)
       const data = await response.json()
-      
+
       if (data.success) {
         setExamHistory(data.data)
       } else {
@@ -68,7 +67,7 @@ export default function BrowsePage() {
     const minutes = Math.round(seconds / 60)
     const hours = Math.floor(minutes / 60)
     const remainingMinutes = minutes % 60
-    
+
     if (hours > 0) {
       return `${hours}h ${remainingMinutes}m`
     }
@@ -119,18 +118,17 @@ export default function BrowsePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ParticleBackground />
-      <Navbar />
-      
+
       {/* Header */}
       <div className="glass border-b border-border">
-        <div style={{ 
-          maxWidth: '90rem', 
-          margin: '0 auto', 
+        <div style={{
+          maxWidth: '90rem',
+          margin: '0 auto',
           padding: isMobile ? '0 1.5rem' : '0 1.5rem',
           paddingTop: isMobile ? '5rem' : '6rem',
           paddingBottom: isMobile ? '2rem' : '2rem'
         }}>
-          <h1 className="gradient-text" style={{ 
+          <h1 className="gradient-text" style={{
             fontSize: isMobile ? 'clamp(1.75rem, 5vw, 2.5rem)' : '2.25rem',
             fontWeight: '700',
             marginBottom: '0.5rem',
@@ -138,7 +136,7 @@ export default function BrowsePage() {
           }}>
             My Exam History
           </h1>
-          <p className="text-muted-foreground" style={{ 
+          <p className="text-muted-foreground" style={{
             fontSize: isMobile ? '1rem' : '1.125rem',
             lineHeight: '1.6'
           }}>
@@ -149,22 +147,22 @@ export default function BrowsePage() {
 
       {/* Quick Actions */}
       <div className="glass border-b border-border">
-        <div style={{ 
-          maxWidth: '90rem', 
-          margin: '0 auto', 
+        <div style={{
+          maxWidth: '90rem',
+          margin: '0 auto',
           padding: isMobile ? '0 1.5rem' : '0 1.5rem',
           paddingTop: isMobile ? '2rem' : '2rem',
           paddingBottom: isMobile ? '2rem' : '2rem'
         }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             gap: isMobile ? '1rem' : '1.5rem',
             flexWrap: 'wrap',
             flexDirection: isMobile ? 'column' : 'row'
           }}>
             <Link
               href="/questions"
-              className="magnetic glass glass-hover btn-primary"
+              className="magnetic btn-primary"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -229,15 +227,15 @@ export default function BrowsePage() {
       {/* Search and Filters */}
       {examHistory.length > 0 && (
         <div className="glass border-b border-border">
-          <div style={{ 
-            maxWidth: '90rem', 
-            margin: '0 auto', 
+          <div style={{
+            maxWidth: '90rem',
+            margin: '0 auto',
             padding: isMobile ? '0 1.5rem' : '0 1.5rem',
             paddingTop: isMobile ? '2rem' : '2rem',
             paddingBottom: isMobile ? '2rem' : '2rem'
           }}>
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               gap: isMobile ? '1rem' : '1.5rem',
               alignItems: 'center',
               flexWrap: 'wrap',
@@ -256,19 +254,19 @@ export default function BrowsePage() {
                   }}
                 />
               </div>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: '1rem',
                 width: isMobile ? '100%' : 'auto'
               }}>
-                <span className="text-muted-foreground" style={{ 
+                <span className="text-muted-foreground" style={{
                   fontSize: '0.875rem',
                   display: 'none' // Hide on mobile for now
                 }}>
                   Sort by:
                 </span>
-                <select 
+                <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="form-input"
@@ -293,9 +291,9 @@ export default function BrowsePage() {
       )}
 
       {/* Results */}
-      <div style={{ 
-        maxWidth: '90rem', 
-        margin: '0 auto', 
+      <div style={{
+        maxWidth: '90rem',
+        margin: '0 auto',
         padding: isMobile ? '0 1.5rem' : '0 1.5rem',
         paddingTop: isMobile ? '2rem' : '2rem',
         paddingBottom: isMobile ? '2rem' : '2rem'
@@ -315,9 +313,9 @@ export default function BrowsePage() {
             </div>
             <h3 className="text-2xl font-semibold text-foreground mb-2">Error Loading History</h3>
             <p className="text-muted-foreground mb-6 text-lg">{error}</p>
-            <button 
+            <button
               onClick={fetchExamHistory}
-              className="magnetic glass glass-hover btn-primary"
+              className="magnetic btn-primary"
             >
               Try Again
             </button>
@@ -330,14 +328,14 @@ export default function BrowsePage() {
             <h3 className="text-2xl font-semibold text-foreground mb-2">No Exams Taken Yet</h3>
             <p className="text-muted-foreground mb-6 text-lg">Start taking exams to build your history and track your progress</p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Link 
-                href="/exam" 
-                className="magnetic glass glass-hover btn-primary"
+              <Link
+                href="/exam"
+                className="magnetic btn-primary"
               >
                 Take First Exam
               </Link>
-              <Link 
-                href="/upload" 
+              <Link
+                href="/upload"
                 className="magnetic glass glass-hover btn-outline"
               >
                 Upload PDF
@@ -346,42 +344,42 @@ export default function BrowsePage() {
           </div>
         ) : (
           <>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: isMobile ? '1.5rem' : '1.5rem'
             }}>
-              <p className="text-muted-foreground" style={{ 
+              <p className="text-muted-foreground" style={{
                 fontSize: isMobile ? '1rem' : '1.125rem'
               }}>
                 {examHistory.length} exam{examHistory.length !== 1 ? 's' : ''} completed
               </p>
             </div>
 
-            <div style={{ 
-              display: 'grid', 
+            <div style={{
+              display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
               gap: isMobile ? '1.5rem' : '2rem'
             }}>
               {sortedExams.map((exam, index) => {
                 const scoreBadge = getScoreBadge(exam.score)
-                
+
                 return (
                   <div key={exam.id} className="glass glass-hover bento-card rounded-2xl overflow-hidden group" style={{ animationDelay: `${index * 0.1}s` }}>
                     {/* Exam Header */}
                     <div className="border-b border-border" style={{
                       padding: isMobile ? '1.5rem' : '1.5rem'
                     }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'flex-start', 
-                        justifyContent: 'space-between', 
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
                         marginBottom: '1rem',
                         flexDirection: isMobile ? 'column' : 'row',
                         gap: isMobile ? '1rem' : '0'
                       }}>
-                        <h3 className="text-foreground group-hover:text-primary transition-colors" style={{ 
+                        <h3 className="text-foreground group-hover:text-primary transition-colors" style={{
                           fontSize: isMobile ? '1.125rem' : '1.25rem',
                           fontWeight: '700',
                           lineHeight: '1.4',
@@ -395,15 +393,15 @@ export default function BrowsePage() {
                           {scoreBadge.label}
                         </span>
                       </div>
-                      
-                      <div className="flex items-center text-muted-foreground mb-3" style={{ 
+
+                      <div className="flex items-center text-muted-foreground mb-3" style={{
                         fontSize: isMobile ? '0.875rem' : '1rem'
                       }}>
                         <Calendar className="w-5 h-5 mr-2" />
                         <span>{formatDate(exam.completed_at)}</span>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-muted-foreground" style={{ 
+
+                      <div className="flex items-center justify-between text-muted-foreground" style={{
                         fontSize: isMobile ? '0.875rem' : '1rem'
                       }}>
                         <div className="flex items-center">
@@ -419,9 +417,9 @@ export default function BrowsePage() {
 
                     {/* Exam Stats */}
                     <div style={{ padding: isMobile ? '1.5rem' : '1.5rem' }}>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(2, 1fr)', 
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
                         gap: isMobile ? '1.5rem' : '1.5rem',
                         marginBottom: isMobile ? '1.5rem' : '1.5rem'
                       }}>
@@ -432,7 +430,7 @@ export default function BrowsePage() {
                           }}>
                             {exam.score}%
                           </div>
-                          <div className="text-muted-foreground" style={{ 
+                          <div className="text-muted-foreground" style={{
                             fontSize: '0.875rem',
                             fontWeight: '500'
                           }}>
@@ -446,7 +444,7 @@ export default function BrowsePage() {
                           }}>
                             {exam.correct_answers}/{exam.total_questions}
                           </div>
-                          <div className="text-muted-foreground" style={{ 
+                          <div className="text-muted-foreground" style={{
                             fontSize: '0.875rem',
                             fontWeight: '500'
                           }}>
@@ -455,10 +453,10 @@ export default function BrowsePage() {
                         </div>
                       </div>
 
-                      <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '0.75rem', 
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
                         marginBottom: isMobile ? '1.5rem' : '1.5rem'
                       }}>
                         <div className="flex items-center justify-between text-sm">
@@ -482,7 +480,7 @@ export default function BrowsePage() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button 
+                        <button
                           className="flex-1 glass glass-hover btn-outline opacity-60 cursor-not-allowed"
                           style={{
                             padding: isMobile ? '0.75rem 1rem' : '0.75rem 1rem',
@@ -542,14 +540,14 @@ export default function BrowsePage() {
               <h3 className="text-2xl font-bold text-foreground mb-4">Keep Learning!</h3>
               <p className="text-muted-foreground mb-8 text-lg leading-relaxed">Continue your learning journey with more practice exams</p>
               <div className="flex gap-4 justify-center flex-wrap">
-                <Link 
-                  href="/exam" 
-                  className="magnetic glass glass-hover btn-primary"
+                <Link
+                  href="/exam"
+                  className="magnetic btn-primary"
                 >
                   Take Another Exam
                 </Link>
-                <Link 
-                  href="/upload" 
+                <Link
+                  href="/upload"
                   className="magnetic glass glass-hover btn-outline"
                 >
                   Upload More PDFs

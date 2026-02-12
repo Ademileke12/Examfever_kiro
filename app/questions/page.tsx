@@ -220,7 +220,7 @@ export default function QuestionsPage() {
                 href="/upload"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="magnetic glass glass-hover btn-primary"
+                className="magnetic btn-primary"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

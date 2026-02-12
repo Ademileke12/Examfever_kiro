@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
-import { BookOpen, Clock, TrendingUp, Award, Play, Upload, BarChart3, Loader2, GraduationCap, Timer, Target, Trophy } from 'lucide-react'
+import { FileText, Clock, TrendingUp, Award, Play, Upload, BarChart3, Loader2, GraduationCap, Timer, Target, Trophy } from 'lucide-react'
 import { getUserId } from '@/lib/auth/user'
 
 interface ExamResult {
@@ -132,12 +131,12 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ParticleBackground />
-      <Navbar />
 
       <div style={{
         maxWidth: '90rem',
         margin: '0 auto',
-        padding: isMobile ? '0 1rem' : '0 1.5rem',
+        paddingLeft: isMobile ? '1rem' : '1.5rem',
+        paddingRight: isMobile ? '1rem' : '1.5rem',
         paddingTop: isMobile ? '5rem' : '6rem',
         paddingBottom: isMobile ? '2rem' : '2rem'
       }}>
@@ -254,49 +253,52 @@ function DashboardContent() {
               <div className="xl:col-span-2">
                 <div className="glass rounded-xl lg:rounded-2xl overflow-hidden">
                   <div className="p-4 lg:p-6 border-b border-slate-200/50 dark:border-slate-700/50">
-                    <h2 className="text-xl lg:text-2xl font-bold text-readable">
+                    <h2 className="text-lg lg:text-2xl font-bold text-readable">
                       Recent Exams
                     </h2>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 sm:p-4 lg:p-6">
                     {recentExams.length === 0 ? (
                       <div className="text-center py-12">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                          <BookOpen className="w-10 h-10 text-white" />
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                          <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                         </div>
                         <p className="text-xl font-semibold text-readable mb-2">No exams taken yet</p>
                         <p className="text-readable-muted">Start by uploading a PDF or taking a practice exam</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {recentExams.map((exam, index) => (
                           <div
                             key={exam.id}
-                            className="glass glass-hover rounded-xl p-4 group cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+                            className="glass glass-hover rounded-xl p-3 sm:p-4 group cursor-pointer transition-all duration-300 hover:scale-[1.01]"
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                  <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
                                 </div>
-                                <div>
-                                  <h3 className="font-semibold text-slate-800 dark:text-white text-base md:text-lg mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base md:text-lg mb-0.5 sm:mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                                     {exam.exam_title}
                                   </h3>
-                                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {exam.total_questions} questions • {formatDuration(exam.time_spent_seconds)} • {formatDate(exam.completed_at)}
+                                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">
+                                    {exam.total_questions} questions • {formatDuration(exam.time_spent_seconds)}
+                                  </p>
+                                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 sm:hidden">
+                                    {formatDate(exam.completed_at)}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className={`text-xl md:text-2xl font-bold mb-1 ${exam.score >= 80 ? 'text-green-600 dark:text-green-400' :
-                                    exam.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                              <div className="text-right shrink-0">
+                                <div className={`text-lg sm:text-xl md:text-2xl font-black mb-0.5 sm:mb-1 ${exam.score >= 80 ? 'text-green-600 dark:text-green-400' :
+                                  exam.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                                   }`}>
                                   {exam.score}%
                                 </div>
-                                <div className="text-xs md:text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:underline">
-                                  View Details
+                                <div className="text-[10px] sm:text-xs md:text-sm text-blue-600 dark:text-blue-400 font-bold group-hover:underline whitespace-nowrap">
+                                  View
                                 </div>
                               </div>
                             </div>
