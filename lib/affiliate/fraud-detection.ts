@@ -19,7 +19,8 @@ export function getClientIP(request: Request): string | null {
     // Try various header formats
     const forwardedFor = headers.get('x-forwarded-for')
     if (forwardedFor) {
-        return forwardedFor.split(',')[0].trim()
+        const firstIP = forwardedFor.split(',')[0]
+        return firstIP ? firstIP.trim() : null
     }
 
     const realIP = headers.get('x-real-ip')
@@ -68,7 +69,7 @@ export async function checkFraudRisk(
     currentIP: string | null,
     currentDevice: string
 ): Promise<{ isFraudulent: boolean; reason?: string }> {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Get referrer's recent fraud logs
     const { data: referrerLogs } = await supabase
@@ -91,6 +92,7 @@ export async function checkFraudRisk(
     }
 
     const referredLog = referredLogs[0]
+    if (!referredLog) return { isFraudulent: false }
 
     // Check if IP matches
     if (currentIP && referrerLogs.some(log => log.ip_address === referredLog.ip_address)) {
@@ -122,7 +124,7 @@ export async function logFraudAttempt(
     isFlagged: boolean = false,
     metadata: Record<string, any> = {}
 ) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     await supabase
         .from('affiliate_fraud_logs')
