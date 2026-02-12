@@ -104,6 +104,7 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onUpgrade={handleUpgrade}
+                currentPlanTier={subscription?.plan_tier}
             />
         </SubscriptionContext.Provider>
     )
