@@ -55,7 +55,7 @@
   }
 
   body {
-    @apply bg-[#F9F9FB] dark:bg-[#0A0A0C] text-foreground antialiased;
+    @apply bg-[#F9F9FB] dark:bg-[#0A0A0C] text-foreground antialiased overflow-x-hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }

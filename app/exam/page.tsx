@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Flag, CheckSquare, Clock, AlertTriangle, Loader2 } from 'lucide-react'
-import { Navbar } from '@/components/ui/Navbar'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { pageVariants } from '@/lib/animations/variants'
 import { useSearchParams } from 'next/navigation'
@@ -234,7 +233,7 @@ const mockExam: ExamData = {
 function ExamContent() {
   const searchParams = useSearchParams()
   const examId = searchParams.get('id')
-  
+
   const [exam, setExam] = useState<ExamData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -293,10 +292,10 @@ function ExamContent() {
 
   const handleExamComplete = useCallback(async () => {
     if (!exam) return
-    
+
     const endTime = new Date().toISOString()
     const totalTimeSpent = Math.round((Date.now() - examStartTime) / 1000) // in seconds
-    
+
     // Calculate score
     const correctAnswers = exam.questions.filter(question => {
       const userAnswer = userAnswers[question.id]
@@ -308,7 +307,7 @@ function ExamContent() {
     }).length
 
     const score = Math.round((correctAnswers / exam.questions.length) * 100)
-    
+
     // Save exam result to database
     try {
       const userId = localStorage.getItem('userId') || 'demo-user'
@@ -338,7 +337,7 @@ function ExamContent() {
     } catch (error) {
       console.error('Error saving exam result:', error)
     }
-    
+
     setExamCompleted(true)
   }, [exam, examStartTime, userAnswers])
 
@@ -423,7 +422,6 @@ function ExamContent() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
-        <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
             <Loader2 className="w-6 h-6 animate-spin" />
@@ -439,7 +437,6 @@ function ExamContent() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
-        <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
           <div className="glass rounded-2xl p-8 text-center max-w-md w-full">
             <div className="text-red-600 mb-4">
@@ -478,7 +475,6 @@ function ExamContent() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
-        <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
           <motion.div
             variants={pageVariants}
@@ -532,7 +528,6 @@ function ExamContent() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
-        <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
           <motion.div
             variants={pageVariants}
@@ -567,8 +562,7 @@ function ExamContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ParticleBackground />
-      <Navbar />
-      
+
       <motion.div
         variants={pageVariants}
         initial="initial"
@@ -580,7 +574,7 @@ function ExamContent() {
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
             {exam.title}
           </h1>
-          
+
           <div className="flex items-center gap-2" style={{ color: getTimerColor() }}>
             {timeLeft <= 600 ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
             <span className="text-lg font-mono font-semibold">
@@ -594,121 +588,61 @@ function ExamContent() {
           <div className="xl:col-span-3 order-2 xl:order-1">
             {/* Question Card */}
             {currentQuestion && (
-              <div className="glass rounded-xl p-6 mb-4" style={{
-                padding: window.innerWidth < 768 ? '1.5rem' : '2.5rem',
-                marginBottom: '1rem'
-              }}>
+              <div className="glass rounded-xl p-5 md:p-10 mb-4 shadow-sm border dark:border-white/5 relative overflow-hidden">
                 {/* Question Header */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'flex-start', 
-                  justifyContent: 'space-between', 
-                  marginBottom: window.innerWidth < 768 ? '1.5rem' : '2rem',
-                  flexDirection: window.innerWidth < 640 ? 'column' : 'row',
-                  gap: window.innerWidth < 640 ? '1rem' : '0'
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                      <span style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#dbeafe',
-                        color: '#1d4ed8',
-                        borderRadius: '9999px',
-                        fontSize: window.innerWidth < 768 ? '0.75rem' : '0.875rem',
-                        fontWeight: '600'
-                      }}>
+                <div className="flex flex-col sm:flex-row items-start justify-between mb-6 md:mb-10 gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
                         Question {currentQuestionIndex + 1} of {exam.questions.length}
                       </span>
                       {userAnswers[currentQuestion.id] && (
-                        <CheckSquare style={{ width: '1.25rem', height: '1.25rem', color: '#16a34a' }} />
+                        <div className="flex items-center gap-1.5 text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-lg">
+                          <CheckSquare className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="text-[10px] font-bold">ANSWERED</span>
+                        </div>
                       )}
                     </div>
-                    <h3 className="text-foreground" style={{ 
-                      fontSize: window.innerWidth < 768 ? '1.125rem' : '1.25rem', 
-                      fontWeight: '600', 
-                      lineHeight: '1.7',
-                      marginBottom: '0.5rem'
-                    }}>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-2">
                       {currentQuestion.text}
                     </h3>
                   </div>
-                  
+
                   <button
                     onClick={() => handleToggleFlag(currentQuestion.id)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      backgroundColor: flaggedQuestions.has(currentQuestion.id) ? '#fef3c7' : '#f9fafb',
-                      color: flaggedQuestions.has(currentQuestion.id) ? '#d97706' : '#6b7280',
-                      alignSelf: window.innerWidth < 640 ? 'flex-start' : 'auto'
-                    }}
+                    className={`p-3 rounded-xl transition-all duration-300 shadow-sm border ${flaggedQuestions.has(currentQuestion.id)
+                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                      : 'bg-white dark:bg-white/5 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-white/10 hover:text-amber-500'
+                      }`}
                   >
-                    <Flag style={{ width: '1.25rem', height: '1.25rem' }} fill={flaggedQuestions.has(currentQuestion.id) ? 'currentColor' : 'none'} />
+                    <Flag className="w-5 h-5 md:w-6 md:h-6" fill={flaggedQuestions.has(currentQuestion.id) ? 'currentColor' : 'none'} />
                   </button>
                 </div>
 
                 {/* Question Content */}
                 {currentQuestion.type === 'multiple-choice' && currentQuestion.answers && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: window.innerWidth < 768 ? '0.75rem' : '1rem' }}>
+                  <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {currentQuestion.answers.map((answer, index) => {
                       const isSelected = userAnswers[currentQuestion.id] === answer.id
-                      
                       return (
                         <button
                           key={answer.id}
                           onClick={() => handleAnswerSelect(currentQuestion.id, answer.id)}
-                          style={{
-                            width: '100%',
-                            padding: '1.25rem',
-                            textAlign: 'left',
-                            borderRadius: '0.75rem',
-                            border: `2px solid ${isSelected ? '#2563eb' : '#e5e7eb'}`,
-                            backgroundColor: isSelected ? '#eff6ff' : 'white',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            marginBottom: '0.5rem'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) {
-                              (e.target as HTMLButtonElement).style.borderColor = '#d1d5db'
-                              ;(e.target as HTMLButtonElement).style.backgroundColor = '#f9fafb'
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) {
-                              (e.target as HTMLButtonElement).style.borderColor = '#e5e7eb'
-                              ;(e.target as HTMLButtonElement).style.backgroundColor = 'white'
-                            }
-                          }}
+                          className={`group relative flex items-center p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 text-left ${isSelected
+                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/10'
+                            : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-white/10'
+                            }`}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <span style={{
-                              width: '2.5rem',
-                              height: '2.5rem',
-                              borderRadius: '50%',
-                              border: `2px solid ${isSelected ? '#2563eb' : '#d1d5db'}`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.875rem',
-                              fontWeight: '600',
-                              color: isSelected ? '#2563eb' : '#6b7280',
-                              backgroundColor: isSelected ? '#dbeafe' : 'transparent',
-                              flexShrink: 0
-                            }}>
-                              {String.fromCharCode(65 + index)}
-                            </span>
-                            <span style={{ 
-                              color: '#111827',
-                              fontSize: '1rem',
-                              lineHeight: '1.6'
-                            }}>
-                              {answer.text}
-                            </span>
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm md:text-base border-2 transition-colors duration-300 mr-4 shrink-0 ${isSelected
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 group-hover:border-blue-300 group-hover:text-blue-500'
+                            }`}>
+                            {String.fromCharCode(65 + index)}
                           </div>
+                          <span className={`text-sm md:text-lg font-medium transition-colors duration-300 ${isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-slate-700 dark:text-slate-300'
+                            }`}>
+                            {answer.text}
+                          </span>
                         </button>
                       )
                     })}
@@ -720,111 +654,36 @@ function ExamContent() {
             )}
 
             {/* Navigation */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginTop: window.innerWidth < 768 ? '1.5rem' : '2rem',
-              flexDirection: window.innerWidth < 640 ? 'column' : 'row',
-              gap: window.innerWidth < 640 ? '1rem' : '0'
-            }}>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 md:mt-10 gap-4">
               <button
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: window.innerWidth < 768 ? '0.75rem 1.25rem' : '1rem 1.75rem',
-                  backgroundColor: currentQuestionIndex === 0 ? '#f3f4f6' : 'white',
-                  color: currentQuestionIndex === 0 ? '#9ca3af' : '#374151',
-                  border: '2px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: window.innerWidth < 768 ? '0.75rem' : '0.875rem',
-                  fontWeight: '500',
-                  width: window.innerWidth < 640 ? '100%' : 'auto',
-                  justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start'
-                }}
-                onMouseEnter={(e) => {
-                  if (currentQuestionIndex !== 0) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#f9fafb'
-                    ;(e.target as HTMLButtonElement).style.borderColor = '#9ca3af'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (currentQuestionIndex !== 0) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = 'white'
-                    ;(e.target as HTMLButtonElement).style.borderColor = '#d1d5db'
-                  }
-                }}
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 border ${currentQuestionIndex === 0
+                  ? 'bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-white/5 cursor-not-allowed'
+                  : 'bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-slate-300'
+                  }`}
               >
-                <ChevronLeft style={{ width: '1.125rem', height: '1.125rem' }} />
-                <span className={window.innerWidth < 480 ? 'hidden' : 'inline'}>Previous</span>
+                <ChevronLeft className="w-4 h-4" />
+                <span>PREVIOUS</span>
               </button>
 
               <button
                 onClick={handleExamComplete}
-                style={{
-                  padding: window.innerWidth < 768 ? '0.75rem 1.5rem' : '1rem 2rem',
-                  backgroundColor: '#16a34a',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontSize: window.innerWidth < 768 ? '0.75rem' : '0.875rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 2px 4px rgba(22, 163, 74, 0.2)',
-                  width: window.innerWidth < 640 ? '100%' : 'auto'
-                }}
-                onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#15803d'
-                  ;(e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#16a34a'
-                  ;(e.target as HTMLButtonElement).style.transform = 'translateY(0)'
-                }}
+                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-green-500/20 active:scale-95"
               >
-                Submit Exam
+                SUBMIT EXAM
               </button>
 
               <button
                 onClick={handleNextQuestion}
                 disabled={currentQuestionIndex === exam.questions.length - 1}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: window.innerWidth < 768 ? '0.75rem 1.25rem' : '1rem 1.75rem',
-                  backgroundColor: currentQuestionIndex === exam.questions.length - 1 ? '#f3f4f6' : '#2563eb',
-                  color: currentQuestionIndex === exam.questions.length - 1 ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: currentQuestionIndex === exam.questions.length - 1 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: window.innerWidth < 768 ? '0.75rem' : '0.875rem',
-                  fontWeight: '500',
-                  width: window.innerWidth < 640 ? '100%' : 'auto',
-                  justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start'
-                }}
-                onMouseEnter={(e) => {
-                  if (currentQuestionIndex !== exam.questions.length - 1) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#1d4ed8'
-                    ;(e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (currentQuestionIndex !== exam.questions.length - 1) {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'
-                    ;(e.target as HTMLButtonElement).style.transform = 'translateY(0)'
-                  }
-                }}
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${currentQuestionIndex === exam.questions.length - 1
+                  ? 'bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-lg shadow-[#7C3AED]/20 hover:scale-[1.02] active:scale-[0.98]'
+                  }`}
               >
-                <span className={window.innerWidth < 480 ? 'hidden' : 'inline'}>Next</span>
-                <ChevronRight style={{ width: '1.125rem', height: '1.125rem' }} />
+                <span>NEXT</span>
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -841,142 +700,77 @@ function ExamContent() {
                 timeRemaining={timeLeft}
               />
             )}
-            
+
             {/* Regular Progress Panel */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '0.75rem',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-              border: '1px solid #e5e7eb',
-              padding: window.innerWidth < 768 ? '1.5rem' : '2rem',
-              height: 'fit-content'
-            }}>
-            <h3 style={{ 
-              fontSize: window.innerWidth < 768 ? '1rem' : '1.125rem', 
-              fontWeight: '600', 
-              color: '#111827', 
-              marginBottom: window.innerWidth < 768 ? '1rem' : '1.5rem' 
-            }}>
-              Exam Progress
-            </h3>
-            
-            {/* Progress Bar */}
-            <div style={{ marginBottom: window.innerWidth < 768 ? '1.5rem' : '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>Progress</span>
-                <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
-                  {currentQuestionIndex + 1} of {exam.questions.length}
-                </span>
-              </div>
-              <div style={{ width: '100%', height: '0.75rem', backgroundColor: '#e5e7eb', borderRadius: '0.375rem', overflow: 'hidden' }}>
-                <div style={{
-                  width: `${((currentQuestionIndex + 1) / exam.questions.length) * 100}%`,
-                  height: '100%',
-                  backgroundColor: '#2563eb',
-                  transition: 'width 0.3s ease',
-                  borderRadius: '0.375rem'
-                }} />
-              </div>
-            </div>
+            <div className="bg-white dark:bg-[#111114] rounded-2xl shadow-sm border border-slate-200 dark:border-white/5 p-6 md:p-8 h-fit">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+                Exam Progress
+              </h3>
 
-            {/* Stats */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: window.innerWidth < 640 ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', 
-              gap: window.innerWidth < 768 ? '1rem' : '1.5rem', 
-              textAlign: 'center', 
-              marginBottom: window.innerWidth < 768 ? '1.5rem' : '2rem' 
-            }}>
-              <div>
-                <div style={{ 
-                  fontSize: window.innerWidth < 768 ? '1.25rem' : '1.5rem', 
-                  fontWeight: '700', 
-                  color: '#16a34a', 
-                  marginBottom: '0.25rem' 
-                }}>
-                  {answeredCount}
+              {/* Progress Bar */}
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Overall Progress</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    {currentQuestionIndex + 1} of {exam.questions.length}
+                  </span>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: '500' }}>
-                  Answered
+                <div className="w-full h-2.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentQuestionIndex + 1) / exam.questions.length) * 100}%` }}
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  />
                 </div>
               </div>
-              
-              <div>
-                <div style={{ 
-                  fontSize: window.innerWidth < 768 ? '1.25rem' : '1.5rem', 
-                  fontWeight: '700', 
-                  color: '#f59e0b', 
-                  marginBottom: '0.25rem' 
-                }}>
-                  {flaggedCount}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: '500' }}>
-                  Flagged
-                </div>
-              </div>
-              
-              <div>
-                <div style={{ 
-                  fontSize: window.innerWidth < 768 ? '1.25rem' : '1.5rem', 
-                  fontWeight: '700', 
-                  color: '#6b7280', 
-                  marginBottom: '0.25rem' 
-                }}>
-                  {exam.questions.length - answeredCount}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: '500' }}>
-                  Remaining
-                </div>
-              </div>
-            </div>
 
-            {/* Question Navigation Dots */}
-            <div className={window.innerWidth < 768 ? 'hidden' : 'block'}>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem', fontWeight: '500' }}>
-                Quick Navigation
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-4 text-center mb-8">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xl md:text-2xl font-black text-green-500">{answeredCount}</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Done</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xl md:text-2xl font-black text-amber-500">{flaggedCount}</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Flagged</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xl md:text-2xl font-black text-slate-400 dark:text-slate-600">{exam.questions.length - answeredCount}</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Left</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
-                {exam.questions.map((question, index) => {
-                  const questionNum = index + 1
-                  const isAnswered = question ? userAnswers[question.id] : false
-                  const isCurrent = index === currentQuestionIndex
-                  const isFlagged = question ? flaggedQuestions.has(question.id) : false
-                  
-                  return (
-                    <button
-                      key={questionNum}
-                      onClick={() => setCurrentQuestionIndex(index)}
-                      style={{
-                        width: '2.5rem',
-                        height: '2.5rem',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        transition: 'all 0.2s',
-                        backgroundColor: isCurrent ? '#2563eb' : isAnswered ? '#16a34a' : isFlagged ? '#f59e0b' : '#e5e7eb',
-                        color: isCurrent || isAnswered || isFlagged ? 'white' : '#6b7280',
-                        boxShadow: isCurrent ? '0 2px 4px rgba(37, 99, 235, 0.3)' : 'none'
-                      }}
-                      title={`Question ${questionNum}${isCurrent ? ' (current)' : ''}${isAnswered ? ' (answered)' : ''}${isFlagged ? ' (flagged)' : ''}`}
-                      onMouseEnter={(e) => {
-                        if (!isCurrent) {
-                          (e.target as HTMLButtonElement).style.transform = 'scale(1.1)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isCurrent) {
-                          (e.target as HTMLButtonElement).style.transform = 'scale(1)'
-                        }
-                      }}
-                    >
-                      {questionNum}
-                    </button>
-                  )
-                })}
+
+              {/* Question Navigation Dots */}
+              <div className="pt-6 border-t dark:border-white/5">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">
+                  Quick Jump
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {exam.questions.map((question, index) => {
+                    const isAnswered = question ? userAnswers[question.id] : false
+                    const isCurrent = index === currentQuestionIndex
+                    const isFlagged = question ? flaggedQuestions.has(question.id) : false
+
+                    return (
+                      <button
+                        key={question.id}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        className={`w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-300 ${isCurrent
+                          ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-110 z-10'
+                          : isAnswered
+                            ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 hover:bg-green-500/20'
+                            : isFlagged
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                              : 'bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                          }`}
+                        title={`Question ${index + 1}${isCurrent ? ' (Current)' : ''}${isAnswered ? ' (Answered)' : ''}${isFlagged ? ' (Flagged)' : ''}`}
+                      >
+                        {index + 1}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
             </div>
           </div>
         </div>
@@ -990,7 +784,6 @@ export default function ExamPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
-        <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
             <Loader2 className="w-6 h-6 animate-spin" />

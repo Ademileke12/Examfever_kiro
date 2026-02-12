@@ -49,30 +49,30 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden xl:flex items-center gap-6">
           {visibleNavItems.map((item) => {
             const isRestricted = item.href === '/analytics' && (!subscription || subscription.plan_tier === 'free')
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-xs font-bold tracking-widest transition-colors hover:text-[#7C3AED] flex items-center gap-1.5 ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}
+                className={`text-[10px] font-bold tracking-widest transition-colors hover:text-[#7C3AED] flex items-center gap-1 ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}
               >
                 {item.label}
-                {isRestricted && <Lock size={12} className="text-amber-500" />}
+                {isRestricted && <Lock size={10} className="text-amber-500" />}
               </Link>
             )
           })}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-4 mr-2">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden md:flex items-center gap-4 mr-2">
             <ThemeToggle />
             {user ? (
               <button
                 onClick={() => signOut()}
-                className="text-sm font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors"
+                className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors"
               >
                 Log Out
               </button>
@@ -80,13 +80,13 @@ export function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="text-sm font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors"
+                  className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-[#7C3AED]/10 text-[#7C3AED] hover:bg-[#7C3AED]/20 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                  className="bg-[#7C3AED]/10 text-[#7C3AED] hover:bg-[#7C3AED]/20 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                 >
                   Sign Up
                 </Link>
@@ -94,21 +94,17 @@ export function Navbar() {
             )}
           </div>
 
-          {!user && (
-            <Link
-              href="/register"
-              className="hidden md:flex bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#7C3AED]/20"
-            >
-              Get Started
-            </Link>
-          )}
+          <div className="md:hidden">
+            <ThemeToggle />
+          </div>
 
           {/* Mobile Toggle */}
           <button
-            className="lg:hidden p-2 text-foreground"
+            className="xl:hidden p-2 text-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
