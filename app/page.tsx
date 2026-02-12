@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Upload, ChevronDown, Brain, Timer, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
+import { AffiliateShowcase } from '@/components/landing/AffiliateShowcase'
 
 export default function Home() {
   const steps = [
@@ -109,6 +110,9 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Affiliate Showcase */}
+      <AffiliateShowcase />
 
       {/* Learn More */}
       <div className="mt-12 mb-20 flex flex-col items-center gap-4 animate-bounce">

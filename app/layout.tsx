@@ -4,6 +4,8 @@ import './globals.css'
 import { ClientProviders } from '@/components/providers/ClientProviders'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
+import { ReferralTracker } from '@/components/affiliate/ReferralTracker'
+import { Suspense } from 'react'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,6 +46,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} ${spaceGrotesk.variable} font-sans antialiased min-h-screen flex flex-col`} suppressHydrationWarning>
         <ClientProviders>
+          <Suspense fallback={null}>
+            <ReferralTracker />
+          </Suspense>
           <Navbar />
           <main className="flex-grow pt-20">
             {children}

@@ -30,6 +30,7 @@ export function Navbar() {
     { href: '/questions', label: 'QUESTIONS', requireAuth: false },
     { href: '/upload', label: 'UPLOAD PDF', requireAuth: false },
     { href: '/analytics', label: 'ANALYTICS', requireAuth: true },
+    { href: '/affiliate', label: 'EARN', requireAuth: true },
     { href: '/store', label: 'STORE', requireAuth: true },
     { href: '/subscription', label: 'PLAN', requireAuth: true }
   ]

@@ -23,13 +23,13 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { signUp } = useAuthContext()
-  
+
   // Check for mobile on client side only
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -48,7 +48,18 @@ export function RegisterForm() {
     setError(null)
     setSuccess(false)
 
-    const { error } = await signUp(data)
+    // Get referral code from cookie or local storage
+    const getReferralCode = () => {
+      const match = document.cookie.match(/(?:^|; )referral_code=([^;]*)/)
+      return match ? match[1] : localStorage.getItem('referral_code')
+    }
+
+    const referralCode = getReferralCode() || undefined
+    if (referralCode) {
+      console.log('📝 Signing up with referral code:', referralCode)
+    }
+
+    const { error } = await signUp({ ...data, referralCode })
 
     if (error) {
       setError(error.message)
@@ -61,9 +72,9 @@ export function RegisterForm() {
 
   if (success) {
     return (
-      <div style={{ 
-        width: '100%', 
-        maxWidth: '28rem', 
+      <div style={{
+        width: '100%',
+        maxWidth: '28rem',
         margin: '0 auto',
         padding: isMobile ? '1rem' : '0'
       }}>
@@ -79,25 +90,25 @@ export function RegisterForm() {
               borderRadius: '50%',
               backgroundColor: '#dcfce7'
             }}>
-              <svg style={{ 
-                height: isMobile ? '2rem' : '1.5rem', 
-                width: isMobile ? '2rem' : '1.5rem', 
-                color: '#16a34a' 
+              <svg style={{
+                height: isMobile ? '2rem' : '1.5rem',
+                width: isMobile ? '2rem' : '1.5rem',
+                color: '#16a34a'
               }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
-          <h3 style={{ 
-            fontSize: isMobile ? '1.25rem' : '1.125rem', 
-            fontWeight: '600', 
-            color: '#111827', 
-            marginBottom: isMobile ? '1rem' : '0.5rem' 
+          <h3 style={{
+            fontSize: isMobile ? '1.25rem' : '1.125rem',
+            fontWeight: '600',
+            color: '#111827',
+            marginBottom: isMobile ? '1rem' : '0.5rem'
           }}>
             Check your email
           </h3>
-          <p style={{ 
-            fontSize: isMobile ? '1rem' : '0.875rem', 
+          <p style={{
+            fontSize: isMobile ? '1rem' : '0.875rem',
             color: '#6b7280',
             lineHeight: '1.6'
           }}>
@@ -132,26 +143,26 @@ export function RegisterForm() {
   }
 
   return (
-    <div style={{ 
-      width: '100%', 
-      maxWidth: '28rem', 
+    <div style={{
+      width: '100%',
+      maxWidth: '28rem',
       margin: '0 auto',
       padding: isMobile ? '1rem' : '0'
     }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
+      <form onSubmit={handleSubmit(onSubmit)} style={{
+        display: 'flex',
+        flexDirection: 'column',
         gap: isMobile ? '1.25rem' : '1.5rem'
       }}>
         <div>
-          <label 
-            htmlFor="email" 
-            style={{ 
-              display: 'block', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: '0.5rem' 
+          <label
+            htmlFor="email"
+            style={{
+              display: 'block',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem'
             }}
           >
             Email
@@ -166,10 +177,10 @@ export function RegisterForm() {
             onBlur={handleInputBlur}
           />
           {errors.email && (
-            <p style={{ 
-              marginTop: '0.5rem', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              color: '#dc2626' 
+            <p style={{
+              marginTop: '0.5rem',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              color: '#dc2626'
             }}>
               {errors.email.message}
             </p>
@@ -177,14 +188,14 @@ export function RegisterForm() {
         </div>
 
         <div>
-          <label 
-            htmlFor="password" 
-            style={{ 
-              display: 'block', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: '0.5rem' 
+          <label
+            htmlFor="password"
+            style={{
+              display: 'block',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem'
             }}
           >
             Password
@@ -199,10 +210,10 @@ export function RegisterForm() {
             onBlur={handleInputBlur}
           />
           {errors.password && (
-            <p style={{ 
-              marginTop: '0.5rem', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              color: '#dc2626' 
+            <p style={{
+              marginTop: '0.5rem',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              color: '#dc2626'
             }}>
               {errors.password.message}
             </p>
@@ -210,14 +221,14 @@ export function RegisterForm() {
         </div>
 
         <div>
-          <label 
-            htmlFor="confirmPassword" 
-            style={{ 
-              display: 'block', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: '0.5rem' 
+          <label
+            htmlFor="confirmPassword"
+            style={{
+              display: 'block',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem'
             }}
           >
             Confirm Password
@@ -232,10 +243,10 @@ export function RegisterForm() {
             onBlur={handleInputBlur}
           />
           {errors.confirmPassword && (
-            <p style={{ 
-              marginTop: '0.5rem', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              color: '#dc2626' 
+            <p style={{
+              marginTop: '0.5rem',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              color: '#dc2626'
             }}>
               {errors.confirmPassword.message}
             </p>

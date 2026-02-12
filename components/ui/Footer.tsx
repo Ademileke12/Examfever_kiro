@@ -17,6 +17,9 @@ export function Footer() {
 
                     {/* Links */}
                     <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
+                        <Link href="/affiliate" className="text-sm font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors">
+                            Affiliate Program
+                        </Link>
                         <Link href="/privacy" className="text-sm font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors">
                             Privacy Policy
                         </Link>
@@ -30,7 +33,7 @@ export function Footer() {
 
                     {/* Copyright */}
                     <p className="text-sm font-semibold text-[#6B7280] dark:text-[#9CA3AF]">
-                        © 2024 ExamFever AI. World-class learning.
+                        © 2026 ExamFever AI. World-class learning.
                     </p>
                 </div>
             </div>

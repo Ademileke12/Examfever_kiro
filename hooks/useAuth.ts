@@ -35,7 +35,7 @@ export function useAuth(): AuthContextType {
 
   const signIn = async (credentials: LoginCredentials) => {
     setLoading(true)
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
@@ -45,14 +45,17 @@ export function useAuth(): AuthContextType {
     return { error }
   }
 
-  const signUp = async (credentials: RegisterCredentials) => {
+  const signUp = async (credentials: RegisterCredentials & { referralCode: string | undefined }) => {
     setLoading(true)
-    
+
     const { error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          referred_by: credentials.referralCode
+        }
       },
     })
 
@@ -62,9 +65,9 @@ export function useAuth(): AuthContextType {
 
   const signOut = async () => {
     setLoading(true)
-    
+
     const { error } = await supabase.auth.signOut()
-    
+
     setLoading(false)
     return { error }
   }

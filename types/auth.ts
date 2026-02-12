@@ -32,7 +32,7 @@ export interface AuthContextType {
   session: Session | null
   loading: boolean
   signIn: (credentials: LoginCredentials) => Promise<{ error: AuthError | null }>
-  signUp: (credentials: RegisterCredentials) => Promise<{ error: AuthError | null }>
+  signUp: (credentials: RegisterCredentials & { referralCode: string | undefined }) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getUserId } from '@/lib/auth/user' // We might need to handle auth manually if this is called from client
+import { affiliateManager } from '@/lib/affiliate/affiliate-manager'
+import { getUserId } from '@/lib/auth/user'
 // Actually, for API routes, we should use supabase.auth.getUser() as we just fixed.
 
 interface VerifyPayload {
@@ -91,6 +92,14 @@ export async function POST(request: NextRequest) {
             if (subError) {
                 console.error('Subscription update error:', subError)
                 throw subError
+            }
+
+            // Affiliate Logic: Award commission if user was referred
+            try {
+                await affiliateManager.awardCommissionIfEligible(user.id, amountPaid, reference)
+            } catch (affError) {
+                console.error('Affiliate commission awarding failed:', affError)
+                // We don't fail the verification if affiliate logic fails
             }
 
         } else if (type === 'addon') {
