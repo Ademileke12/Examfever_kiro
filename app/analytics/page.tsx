@@ -66,17 +66,19 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#0A0A0C]">
       <ParticleBackground />
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
             <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">Analytics Dashboard</h1>
-              <p className="text-readable-muted text-lg">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-1 sm:mb-2">
+                Analytics Dashboard
+              </h1>
+              <p className="text-readable-muted text-sm sm:text-base md:text-lg">
                 Track your learning progress and optimize your study strategy
               </p>
             </div>
@@ -154,14 +156,14 @@ function TimeRangeSelector({
 
   return (
     <div className="flex items-center space-x-2">
-      <span className="text-sm text-readable-light">Time Range:</span>
+      <span className="hidden sm:inline text-sm text-readable-light">Time Range:</span>
       <div className="flex items-center space-x-1 glass rounded-lg p-1">
         {timeRanges.map((range) => (
           <button
             key={range.value}
             onClick={() => handleRangeChange(range.value)}
             disabled={loading}
-            className={`magnetic px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${selectedRange === range.value
+            className={`magnetic px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-300 whitespace-nowrap ${selectedRange === range.value
               ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-glow'
               : 'text-readable-muted hover:text-readable'
               } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
