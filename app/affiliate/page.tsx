@@ -72,6 +72,24 @@ function AffiliateDashboardContent() {
         async function fetchStats() {
             try {
                 const response = await fetch('/api/affiliate/stats')
+                const contentType = response.headers.get('content-type')
+
+                if (!response.ok) {
+                    const text = await response.text()
+                    console.error('[AffiliateDashboard] API Error:', response.status, text)
+                    setError(`API Error (${response.status}): ${text.substring(0, 50)}...`)
+                    setLoading(false)
+                    return
+                }
+
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text()
+                    console.error('[AffiliateDashboard] Non-JSON response:', text)
+                    setError('Received invalid response from server')
+                    setLoading(false)
+                    return
+                }
+
                 const data = await response.json()
 
                 if (data.success) {
