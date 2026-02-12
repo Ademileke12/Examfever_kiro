@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
 
         // 2. Security Check: Verify amount matches the requested item to prevent price manipulation
         const PRICE_MAP: Record<string, number> = {
-            'standard': 14500,
-            'premium': 24500,
+            'standard': 3500,
+            'premium': 6300,
             'package_1': 3000,
             'package_2': 5500,
             'package_3': 8500

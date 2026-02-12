@@ -206,3 +206,94 @@ describe('Payment Verification API', () => {
         )
     })
 })
+
+describe('Payment Verification API - Plans', () => {
+    let mockUpsert: jest.Mock
+    let mockSupabase: any
+
+    beforeEach(() => {
+        jest.clearAllMocks()
+        process.env.PAYSTACK_SECRET_KEY = 'mock-secret-key'
+
+        mockUpsert = jest.fn().mockResolvedValue({ error: null })
+        mockSupabase = {
+            auth: {
+                getUser: jest.fn().mockResolvedValue({
+                    data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+                    error: null
+                })
+            },
+            from: jest.fn(() => ({
+                upsert: mockUpsert,
+                insert: jest.fn().mockResolvedValue({ error: null })
+            }))
+        }
+            ; (createClient as jest.Mock).mockResolvedValue(mockSupabase)
+    })
+
+    it('should verify Paystack transaction for Standard Plan (3500)', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                status: true,
+                data: { status: 'success', amount: 350000, reference: 'plan-ref-1' }
+            })
+        })
+
+        const req = new NextRequest('http://localhost/api/subscription/verify', {
+            method: 'POST',
+            body: JSON.stringify({ reference: 'plan-ref-1', type: 'plan', id: 'standard' })
+        })
+
+        const res = await POST(req)
+        const body = await res.json()
+        expect(body.success).toBe(true)
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({ plan_tier: 'standard', uploads_allowed: 10 }),
+            expect.any(Object)
+        )
+    })
+
+    it('should verify Paystack transaction for Premium Plan (6300)', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                status: true,
+                data: { status: 'success', amount: 630000, reference: 'plan-ref-2' }
+            })
+        })
+
+        const req = new NextRequest('http://localhost/api/subscription/verify', {
+            method: 'POST',
+            body: JSON.stringify({ reference: 'plan-ref-2', type: 'plan', id: 'premium' })
+        })
+
+        const res = await POST(req)
+        const body = await res.json()
+        expect(body.success).toBe(true)
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({ plan_tier: 'premium', uploads_allowed: 15 }),
+            expect.any(Object)
+        )
+    })
+
+    it('should fail if amount is less than expected (Price Manipulation)', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                status: true,
+                data: { status: 'success', amount: 100000, reference: 'hack-ref' } // ₦1,000 instead of ₦6,300
+            })
+        })
+
+        const req = new NextRequest('http://localhost/api/subscription/verify', {
+            method: 'POST',
+            body: JSON.stringify({ reference: 'hack-ref', type: 'plan', id: 'premium' })
+        })
+
+        const res = await POST(req)
+        const body = await res.json()
+        expect(body.success).toBe(false)
+        expect(body.error).toContain('Payment amount mismatch')
+    })
+})
