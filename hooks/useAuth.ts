@@ -52,7 +52,7 @@ export function useAuth(): AuthContextType {
       email: credentials.email,
       password: credentials.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         data: {
           referred_by: credentials.referralCode
         }

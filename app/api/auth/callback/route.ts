@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    
+
     try {
       await supabase.auth.exchangeCodeForSession(code)
     } catch (error) {
@@ -35,6 +35,6 @@ export async function GET(request: NextRequest) {
   }
 
   // URL to redirect to after sign in process completes
-  const redirectTo = requestUrl.searchParams.get('redirectTo') || '/dashboard'
+  const redirectTo = requestUrl.searchParams.get('redirectTo') || '/login'
   return NextResponse.redirect(`${requestUrl.origin}${redirectTo}`)
 }
