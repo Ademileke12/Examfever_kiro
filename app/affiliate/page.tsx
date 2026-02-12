@@ -167,17 +167,17 @@ function AffiliateDashboardContent() {
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                             <Card className="relative bg-white dark:bg-[#1A1A1E] border-border/50 shadow-xl p-2 rounded-2xl overflow-hidden">
-                                <div className="flex flex-col sm:flex-row items-center gap-2 p-2">
-                                    <div className="flex-1 w-full flex items-center gap-3 bg-muted/30 dark:bg-black/20 rounded-xl px-4 py-3 border border-border/50">
+                                <div className="flex flex-col md:flex-row items-center gap-2 p-1.5 md:p-2">
+                                    <div className="flex-1 w-full flex items-center gap-3 bg-muted/30 dark:bg-black/20 rounded-xl px-3 md:px-4 py-3 border border-border/50 min-w-0">
                                         <Share2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                                        <code className="flex-1 font-mono text-sm truncate text-foreground">
+                                        <code className="flex-1 font-mono text-sm truncate text-foreground min-w-0">
                                             {stats?.referralLink || 'Loading...'}
                                         </code>
                                     </div>
                                     <Button
                                         onClick={copyToClipboard}
                                         size="lg"
-                                        className={`w-full sm:w-auto shrink-0 gap-2 font-semibold shadow-lg shadow-primary/20 transition-all ${copied ? 'bg-green-500 hover:bg-green-600' : ''
+                                        className={`w-full md:w-auto shrink-0 gap-2 font-semibold shadow-lg shadow-primary/20 transition-all ${copied ? 'bg-green-500 hover:bg-green-600' : ''
                                             }`}
                                     >
                                         {copied ? (
