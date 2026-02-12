@@ -18,6 +18,7 @@ BEGIN
         WHERE r.status = 'subscribed'
     LOOP
         -- 2. Check if a commission record already exists for this specific referral
+        -- We want to prevent double-payouts
         IF NOT EXISTS (
             SELECT 1 FROM public.affiliate_commissions 
             WHERE referral_id = ref.id
@@ -34,7 +35,7 @@ BEGIN
             IF tx_amount IS NOT NULL THEN
                 comm_amount := tx_amount * 0.13;
                 
-                -- A. Create the commission record
+                -- A. Create the commission record in 'paid' status
                 INSERT INTO public.affiliate_commissions (
                     user_id, 
                     referral_id, 
@@ -56,46 +57,13 @@ BEGIN
                     updated_at = NOW()
                 WHERE user_id = ref.referrer_id;
                 
-                RAISE NOTICE 'Commission of % awarded to referrer % for user %', comm_amount, ref.referrer_id, ref.referred_user_id;
+                RAISE NOTICE 'SUCCESS: Commission of ₦% awarded to referrer % for user %', comm_amount, ref.referrer_id, ref.referred_user_id;
             ELSE
-                RAISE WARNING 'No successful transaction found for subscribed user %', ref.referred_user_id;
+                RAISE WARNING 'SKIP: No successful transaction found for subscribed user %', ref.referred_user_id;
             END IF;
-        END IF;
-    LOOP END; -- Fixed syntax below
-END $$;
-
--- Actually, let's use a cleaner LOOP syntax
-DO $$
-DECLARE
-    ref RECORD;
-    tx_amount DECIMAL;
-    comm_amount DECIMAL;
-    tx_ref TEXT;
-BEGIN
-    FOR ref IN 
-        SELECT r.id, r.referrer_id, r.referred_user_id 
-        FROM public.referrals r
-        WHERE r.status = 'subscribed'
-    LOOP
-        IF NOT EXISTS (SELECT 1 FROM public.affiliate_commissions WHERE referral_id = ref.id) THEN
-            SELECT amount, reference INTO tx_amount, tx_ref
-            FROM public.payment_transactions
-            WHERE user_id = ref.referred_user_id AND status = 'success'
-            ORDER BY created_at DESC
-            LIMIT 1;
-
-            IF tx_amount IS NOT NULL THEN
-                comm_amount := tx_amount * 0.13;
-                
-                INSERT INTO public.affiliate_commissions (user_id, referral_id, amount, transaction_reference, status)
-                VALUES (ref.referrer_id, ref.id, comm_amount, tx_ref, 'paid');
-                
-                UPDATE public.affiliate_profiles
-                SET total_balance = total_balance + comm_amount, updated_at = NOW()
-                WHERE user_id = ref.referrer_id;
-                
-                RAISE NOTICE 'Repaired commission: % for referrer %', comm_amount, ref.referrer_id;
-            END IF;
+        ELSE
+            -- Commission already exists, do nothing
+            CONTINUE;
         END IF;
     END LOOP;
 END $$;
