@@ -100,14 +100,24 @@ export async function GET(request: NextRequest) {
             console.error('[AffiliateStats] Commissions error:', commissionsError)
         }
 
-        // 7. Process data for frontend
+        // 7. Process data for frontend (with PII masking)
         const referralsWithUsers = referrals?.map(referral => {
             const userProfile = userProfiles.find(p => p.id === referral.referred_user_id)
+
+            // Mask Email
+            const email = userProfile?.email || ''
+            const [local, domain] = email.split('@')
+            const maskedEmail = local ? `${local[0]}***${local[local.length - 1]}@${domain}` : 'N/A'
+
+            // Mask Name
+            const name = userProfile?.full_name || 'New User'
+            const maskedName = name.split(' ').map((n: string) => `${n[0]}***`).join(' ')
+
             return {
                 id: referral.id,
                 user: {
-                    name: userProfile?.full_name || 'New User',
-                    email: userProfile?.email || 'N/A'
+                    name: maskedName,
+                    email: maskedEmail
                 },
                 status: referral.status,
                 created_at: referral.created_at

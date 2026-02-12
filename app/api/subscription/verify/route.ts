@@ -51,9 +51,29 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const amountPaid = paystackData.data.amount / 100
+        const amountPaid = paystackData.data.amount / 100 // Convert from kobo to Naira
 
-        // 2. Logic based on Type
+        // 2. Security Check: Verify amount matches the requested item to prevent price manipulation
+        const PRICE_MAP: Record<string, number> = {
+            'standard': 14500,
+            'premium': 24500,
+            'package_1': 3000,
+            'package_2': 5500,
+            'package_3': 8500
+        }
+
+        const requestedId = type === 'plan' ? id : (type === 'addon' ? id : plan)
+        const expectedPrice = PRICE_MAP[requestedId]
+
+        if (expectedPrice && amountPaid < expectedPrice) {
+            console.error(`[SECURITY] Price mismatch. Paid: ${amountPaid}, Expected: ${expectedPrice} for ${requestedId}`)
+            return NextResponse.json(
+                { success: false, error: 'Payment amount mismatch. Please contact support.' },
+                { status: 400 }
+            )
+        }
+
+        // 3. Logic based on Type
         if (type === 'plan' || (!type && plan)) {
             // Plan Logic
             const planName = type === 'plan' ? id : plan
