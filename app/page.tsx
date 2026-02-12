@@ -3,8 +3,7 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Upload, ChevronDown, Brain, Timer, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
-import { Testimonials } from "@/components/landing/Testimonials"
-import { FAQ } from "@/components/landing/FAQ"
+// Removed unused imports causing build errors
 import { Footer } from "@/components/ui/Footer"
 import { AffiliateShowcase } from "@/components/landing/AffiliateShowcase"
 
