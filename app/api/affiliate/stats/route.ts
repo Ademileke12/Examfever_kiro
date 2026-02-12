@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
 
         const pendingCount = referrals?.filter(r => r.status === 'signed_up').length || 0
         const subscribedCount = referrals?.filter(r => r.status === 'subscribed').length || 0
+        const actualCount = referrals?.length || 0
 
         // Determine Site URL: Env Var > Request Origin > Localhost fallback
         let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -140,7 +141,7 @@ export async function GET(request: NextRequest) {
             data: {
                 referralCode: profile.referral_code,
                 totalBalance: parseFloat(profile.total_balance?.toString() || '0'),
-                referredCount: profile.referred_count || 0,
+                referredCount: Math.max(profile.referred_count || 0, actualCount), // Use the larger of the two for accuracy
                 pendingCount,
                 subscribedCount,
                 referralLink: `${siteUrl}/register?ref=${profile.referral_code}`,

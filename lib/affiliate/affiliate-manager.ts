@@ -103,15 +103,33 @@ export class AffiliateManager {
         const supabase = await createClient()
 
         // 1. Check if user was referred
+        // We do a more robust query here to handle RLS and join issues
         const { data: referral, error: referralError } = await supabase
             .from('referrals')
-            .select('*, affiliate_profiles!referrer_id(is_active)')
+            .select(`
+                id, 
+                referrer_id, 
+                referred_user_id, 
+                status
+            `)
             .eq('referred_user_id', userId)
             .eq('status', 'signed_up')
             .single()
 
         if (referralError || !referral) {
-            // Not a referred user or already processed
+            console.log(`[AffiliateManager] No pending referral found for user ${userId}. (Error: ${referralError?.message || 'none'})`)
+            return null
+        }
+
+        // 2. Verify referrer profile and get active status
+        const { data: referrer, error: referrerError } = await supabase
+            .from('affiliate_profiles')
+            .select('is_active')
+            .eq('user_id', referral.referrer_id)
+            .single()
+
+        if (referrerError || !referrer || !referrer.is_active) {
+            console.warn(`[AffiliateManager] Referrer ${referral.referrer_id} is inactive or not found.`)
             return null
         }
 
