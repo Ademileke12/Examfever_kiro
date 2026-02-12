@@ -29,10 +29,48 @@ export async function checkSubscriptionLimit(
             .eq('user_id', user.id)
             .single()
 
-        if (error || !subscription) {
+        if (error && error.code !== 'PGRST116') {
+            // Real error, not just "no rows found"
             return {
                 allowed: false,
-                error: 'Subscription not found'
+                error: 'Failed to fetch subscription'
+            }
+        }
+
+        // If no subscription found, create a default FREE subscription
+        if (!subscription || error?.code === 'PGRST116') {
+            const { data: newSubscription, error: createError } = await supabase
+                .from('user_subscriptions')
+                .insert({
+                    user_id: user.id,
+                    plan_tier: 'free',
+                    uploads_allowed: 2,
+                    exams_allowed: 2,
+                    uploads_used: 0,
+                    exams_used: 0,
+                    is_active: true
+                })
+                .select()
+                .single()
+
+            if (createError || !newSubscription) {
+                console.error('Failed to create default subscription:', createError)
+                return {
+                    allowed: false,
+                    error: 'Failed to initialize subscription'
+                }
+            }
+
+            // Use the newly created subscription
+            const field = type === 'upload' ? 'uploads' : 'exams'
+            const used = newSubscription[`${field}_used`]
+            const allowed = newSubscription[`${field}_allowed`]
+            const remaining = allowed - used
+
+            return {
+                allowed: remaining > 0,
+                remaining,
+                total: allowed
             }
         }
 
