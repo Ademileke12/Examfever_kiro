@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Sparkles, Upload, ChevronDown, Brain, Timer, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 // Removed unused imports causing build errors
-import { Footer } from "@/components/ui/Footer"
+// Removed unused imports causing build errors
 import { AffiliateShowcase } from "@/components/landing/AffiliateShowcase"
 
 export default function Home() {
@@ -122,7 +122,6 @@ export default function Home() {
         <ChevronDown className="w-5 h-5 text-[#9CA3AF]" />
       </div>
 
-      <Footer />
     </div>
   )
 }
