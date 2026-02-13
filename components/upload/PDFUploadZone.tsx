@@ -27,28 +27,28 @@ export default function PDFUploadZone({
   const validateFile = (file: File): PDFValidationResult => {
     const errors: string[] = []
     const warnings: string[] = []
-    
+
     // Check file type
     if (file.type !== 'application/pdf') {
       errors.push('File must be a PDF')
     }
-    
+
     // Check file size (50MB limit)
     const maxSize = 50 * 1024 * 1024 // 50MB in bytes
     if (file.size > maxSize) {
       errors.push('File size must be less than 50MB')
     }
-    
+
     // Check if file has content
     if (file.size === 0) {
       errors.push('File appears to be empty')
     }
-    
+
     // Add warning for large files
     if (file.size > 10 * 1024 * 1024) { // 10MB
       warnings.push('Large file may take longer to process')
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -96,7 +96,7 @@ export default function PDFUploadZone({
   const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     setDragState(prev => ({
       ...prev,
       dragCounter: prev.dragCounter + 1,
@@ -107,7 +107,7 @@ export default function PDFUploadZone({
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     setDragState(prev => {
       const newCounter = prev.dragCounter - 1
       return {
@@ -122,7 +122,7 @@ export default function PDFUploadZone({
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     setDragState(prev => ({
       ...prev,
       isDragOver: true
@@ -132,7 +132,7 @@ export default function PDFUploadZone({
   const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     setDragState({
       isDragOver: false,
       isDragActive: false,
@@ -172,11 +172,11 @@ export default function PDFUploadZone({
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: [0, 10, -10, 0],
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
+                transition={{
                   duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut"
@@ -205,23 +205,23 @@ export default function PDFUploadZone({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         animate={{
-          borderColor: disabled 
-            ? 'rgba(229, 231, 235, 0.5)' 
+          borderColor: disabled
+            ? 'rgba(229, 231, 235, 0.5)'
             : isDragOver
-            ? 'rgba(59, 130, 246, 0.8)'
-            : isDragActive
-            ? 'rgba(59, 130, 246, 0.6)'
-            : 'rgba(209, 213, 219, 0.5)'
+              ? 'rgba(59, 130, 246, 0.8)'
+              : isDragActive
+                ? 'rgba(59, 130, 246, 0.6)'
+                : 'rgba(209, 213, 219, 0.5)'
         }}
         style={{
           border: '2px dashed',
-          backgroundColor: disabled 
-            ? 'rgba(249, 250, 251, 0.5)' 
+          backgroundColor: disabled
+            ? 'rgba(249, 250, 251, 0.5)'
             : isDragOver
-            ? 'rgba(239, 246, 255, 0.8)'
-            : isDragActive
-            ? 'rgba(240, 249, 255, 0.6)'
-            : 'var(--glass-bg)'
+              ? 'rgba(239, 246, 255, 0.8)'
+              : isDragActive
+                ? 'rgba(240, 249, 255, 0.6)'
+                : 'var(--glass-bg)'
         }}
       >
         {/* Animated background particles */}
@@ -279,11 +279,11 @@ export default function PDFUploadZone({
                 <FileText className="w-16 h-16 text-gray-400 dark:text-gray-500" />
                 <motion.div
                   className="absolute -bottom-1 -right-1"
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.5, 1, 0.5]
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut"
@@ -294,16 +294,16 @@ export default function PDFUploadZone({
               </motion.div>
             )}
           </motion.div>
-          
+
           <div className="space-y-2">
-            <motion.h3 
+            <motion.h3
               className="text-xl font-semibold text-gray-900 dark:text-white"
               animate={isDragActive ? { scale: 1.05 } : { scale: 1 }}
             >
               {isDragActive ? 'Drop your PDF files here' : 'Drag & drop PDF files'}
             </motion.h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {disabled 
+              {disabled
                 ? 'Upload disabled'
                 : `Support for up to ${maxFiles} PDF files, max 50MB each`
               }
@@ -311,14 +311,26 @@ export default function PDFUploadZone({
           </div>
 
           {!disabled && (
-            <motion.div 
-              className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-2"
-              initial={{ opacity: 0.7 }}
-              whileHover={{ opacity: 1 }}
-            >
-              <FileText className="w-3 h-3" />
-              Only PDF files are accepted
-            </motion.div>
+            <div className="space-y-3">
+              <motion.div
+                className="text-xs text-gray-500 dark:text-gray-500 flex items-center justify-center gap-2"
+                initial={{ opacity: 0.7 }}
+                whileHover={{ opacity: 1 }}
+              >
+                <FileText className="w-3 h-3" />
+                Only PDF files are accepted
+              </motion.div>
+
+              <motion.div
+                className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full flex items-center justify-center gap-1.5"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Note: Scanned/Image PDFs are not supported yet
+              </motion.div>
+            </div>
           )}
 
           {/* Scanning line animation when dragging */}
@@ -329,7 +341,7 @@ export default function PDFUploadZone({
                 initial={{ y: '-100%' }}
                 animate={{ y: '100%' }}
                 exit={{ y: '100%' }}
-                transition={{ 
+                transition={{
                   duration: 1.5,
                   repeat: Infinity,
                   ease: "easeInOut"

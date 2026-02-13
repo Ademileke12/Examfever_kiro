@@ -70,21 +70,26 @@ export default function UploadPage() {
       const userId = getUserId()
       formData.append('userId', userId)
 
-      // Start the processing request (no timeout on this request)
+      // Start the processing request
       const processResponse = await fetch('/api/pdf/process', {
         method: 'POST',
         body: formData
-        // No timeout - let the backend handle its own timeouts
       })
 
-      const processResult = await processResponse.json()
+      // Robust response handling
+      let processResult
+      try {
+        processResult = await processResponse.json()
+      } catch (jsonError) {
+        throw new Error('Upload failed: Server returned an invalid response. Please try again or contact support.')
+      }
 
-      if (!processResult.success) {
-        throw new Error(processResult.error)
+      if (!processResponse.ok || !processResult.success) {
+        throw new Error(processResult.error || 'Upload failed: The server encountered an error during processing.')
       }
 
       // Store question generation results
-      if (processResult.data.questionGeneration) {
+      if (processResult.data?.questionGeneration) {
         setQuestionResults(prev => ({
           ...prev,
           [fileId]: processResult.data.questionGeneration
@@ -101,10 +106,13 @@ export default function UploadPage() {
       refetchStatus()
 
     } catch (error) {
-      let errorMessage = 'Processing failed'
+      console.error('[Upload] Error processing file:', error)
 
+      let errorMessage = 'Upload failed'
       if (error instanceof Error) {
-        errorMessage = error.message
+        errorMessage = error.message.includes('Unexpected token')
+          ? 'Upload failed: Server connection issue'
+          : error.message
       }
 
       updateUploadProgress(fileId, {
@@ -297,8 +305,8 @@ export default function UploadPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: FileText, text: "Select PDF files (up to 50MB each) with text content" },
-              { icon: Brain, text: "AI automatically extracts text and generates exam questions" },
+              { icon: FileText, text: "Select PDF files (up to 50MB each) with selectable text content" },
+              { icon: Brain, text: "AI extracts text and generates exam questions. Scanned/Image PDFs are not supported yet." },
               { icon: Database, text: "Questions are saved to your personal question bank" },
               { icon: Zap, text: "Create custom exams using your generated questions" },
               { icon: Sparkles, text: "No file storage required - questions contain all needed content" },
