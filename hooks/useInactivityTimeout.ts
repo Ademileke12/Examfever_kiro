@@ -10,10 +10,10 @@ interface UseInactivityTimeoutOptions {
 
 /**
  * Hook to track user inactivity and trigger an action after a timeout.
- * Default timeout is 30 minutes (1,800,000 ms).
+ * Default timeout is 1.5 minutes (90,000 ms).
  */
 export function useInactivityTimeout({
-    timeoutMs = 30 * 60 * 1000, // 30 minutes
+    timeoutMs = 1.5 * 60 * 1000, // 1.5 minutes
     onTimeout,
     enabled = true
 }: UseInactivityTimeoutOptions) {
