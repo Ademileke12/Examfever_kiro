@@ -42,25 +42,32 @@ export default function Home() {
       >
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#7C3AED]/20 to-transparent" />
 
-        <h1 className="text-6xl md:text-[10rem] font-black tracking-tighter leading-none mb-12 text-[#111114] dark:text-white">
-          Exam Fever
-        </h1>
+        <div className="mb-8 relative z-10">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            <span>New: AI Flashcard Generator</span>
+          </span>
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] text-[#111114] dark:text-white mb-6">
+            Exam <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9]">Fever</span>
+          </h1>
+        </div>
 
-        <p className="text-lg md:text-xl font-semibold text-[#6B7280] dark:text-[#9CA3AF] max-w-2xl mb-12 leading-relaxed">
-          Upload your PDFs, generate practice questions with AI, and take timed exams to master your subjects with cutting-edge technology.
+        <p className="text-lg md:text-xl font-medium text-[#6B7280] dark:text-[#9CA3AF] max-w-2xl mb-12 leading-relaxed">
+          Upload your PDFs, generate practice questions with AI, and take
+          timed exams to master your subjects with cutting-edge technology.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-6 mb-12 w-full justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full justify-center">
           <Link
             href="/register"
-            className="btn-primary group flex items-center justify-center gap-2 min-w-[240px]"
+            className="group flex items-center justify-center gap-2 min-w-[200px] px-8 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9] hover:opacity-90 transition-all duration-300 shadow-lg shadow-violet-500/25 active:scale-95"
           >
             <Sparkles className="w-5 h-5 transition-transform group-hover:rotate-12" />
             Get Started Free
           </Link>
           <Link
             href="/upload"
-            className="btn-outline flex items-center justify-center gap-2 min-w-[240px]"
+            className="flex items-center justify-center gap-2 min-w-[200px] px-8 py-4 rounded-2xl font-bold text-foreground border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-300 active:scale-95"
           >
             <Upload className="w-5 h-5" />
             Upload Your First PDF
