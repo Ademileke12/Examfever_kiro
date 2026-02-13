@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { handleApiError } from '@/lib/security/error-handler'
 
 /**
  * Get Affiliate Stats for Current User
@@ -14,13 +15,10 @@ export async function GET(request: NextRequest) {
         // 1. Authenticate user
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            console.log('[AffiliateStats] Unauthorized:', authError)
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-        console.log('[AffiliateStats] User authenticated:', user.id)
 
         // 2. Get affiliate profile
-        console.log('[AffiliateStats] Fetching profile...')
         let { data: profile, error: profileError } = await supabase
             .from('affiliate_profiles')
             .select('*')
@@ -29,8 +27,6 @@ export async function GET(request: NextRequest) {
 
         // 3. Lazy create profile if missing
         if (!profile) {
-
-            // Generate a random 8-character referral code
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
             let referralCode = ''
             for (let i = 0; i < 8; i++) {
@@ -49,11 +45,11 @@ export async function GET(request: NextRequest) {
                 .select()
                 .single()
 
+            if (createError) throw createError
             profile = newProfile
         }
 
         // 4. Fetch Referrals
-        console.log('[AffiliateStats] Fetching referrals...')
         const { data: referrals, error: referralsError } = await supabase
             .from('referrals')
             .select(`
@@ -66,29 +62,27 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(20)
 
-        if (referralsError) {
-            console.error('[AffiliateStats] Referrals error:', referralsError)
-        }
-
-        // 5. Get user profiles for referred users
+        // 5. Get user profiles for referred users with resilient handling
         const referredUserIds = referrals?.map(r => r.referred_user_id) || []
         let userProfiles: any[] = []
 
         if (referredUserIds.length > 0) {
-            const { data: profiles, error: profilesError } = await supabase
-                .from('user_profiles')
-                .select('id, full_name, email')
-                .in('id', referredUserIds)
+            // We use a safe try-catch for the profile lookup to prevent total failure if the table is missing/locked
+            try {
+                const { data: profiles, error: profilesError } = await supabase
+                    .from('user_profiles')
+                    .select('id, full_name, email')
+                    .in('id', referredUserIds)
 
-            if (profilesError) {
-                console.error('[AffiliateStats] User profiles error:', profilesError)
-            } else {
-                userProfiles = profiles || []
+                if (!profilesError) {
+                    userProfiles = profiles || []
+                }
+            } catch (err) {
+                console.warn('[AffiliateStats] Profile lookup failed, using fallbacks.')
             }
         }
 
         // 6. Fetch Commissions
-        console.log('[AffiliateStats] Fetching commissions...')
         const { data: commissions, error: commissionsError } = await supabase
             .from('affiliate_commissions')
             .select('*')
@@ -96,22 +90,18 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(20)
 
-        if (commissionsError) {
-            console.error('[AffiliateStats] Commissions error:', commissionsError)
-        }
-
-        // 7. Process data for frontend (with PII masking)
+        // 7. Process data for frontend (with PII masking and fallbacks)
         const referralsWithUsers = referrals?.map(referral => {
             const userProfile = userProfiles.find(p => p.id === referral.referred_user_id)
 
-            // Mask Email
-            const email = userProfile?.email || ''
+            // Resilient Email Masking
+            const email = userProfile?.email || 'student@examfever.com'
             const [local, domain] = email.split('@')
-            const maskedEmail = local ? `${local[0]}***${local[local.length - 1]}@${domain}` : 'N/A'
+            const maskedEmail = local ? `${local[0]}***${local[local.length - 1]}@${domain}` : 's***t@examfever.com'
 
-            // Mask Name
-            const name = userProfile?.full_name || 'New User'
-            const maskedName = name.split(' ').map((n: string) => `${n[0]}***`).join(' ')
+            // Resilient Name Masking
+            const name = userProfile?.full_name || 'Anonymous Student'
+            const maskedName = name.split(' ').map((n: string) => n.length > 0 ? `${n[0]}***` : '***').join(' ')
 
             return {
                 id: referral.id,
@@ -128,7 +118,6 @@ export async function GET(request: NextRequest) {
         const subscribedCount = referrals?.filter(r => r.status === 'subscribed').length || 0
         const actualCount = referrals?.length || 0
 
-        // Determine Site URL: Env Var > Request Origin > Localhost fallback
         let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
         if (!siteUrl) {
             const host = request.headers.get('host')
@@ -141,7 +130,7 @@ export async function GET(request: NextRequest) {
             data: {
                 referralCode: profile.referral_code,
                 totalBalance: parseFloat(profile.total_balance?.toString() || '0'),
-                referredCount: Math.max(profile.referred_count || 0, actualCount), // Use the larger of the two for accuracy
+                referredCount: Math.max(profile.referred_count || 0, actualCount),
                 pendingCount,
                 subscribedCount,
                 referralLink: `${siteUrl}/register?ref=${profile.referral_code}`,
@@ -156,10 +145,6 @@ export async function GET(request: NextRequest) {
         })
 
     } catch (error) {
-        console.error('[AffiliateStats] Global error:', error)
-        return NextResponse.json({
-            error: 'Internal server error',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 })
+        return handleApiError(error, 'AffiliateStats')
     }
 }
