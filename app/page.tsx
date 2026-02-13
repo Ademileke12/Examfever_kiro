@@ -6,6 +6,7 @@ import Link from 'next/link'
 // Removed unused imports causing build errors
 // Removed unused imports causing build errors
 import { AffiliateShowcase } from "@/components/landing/AffiliateShowcase"
+import { DemoSection } from "@/components/landing/demo/DemoSection"
 
 export default function Home() {
   const steps = [
@@ -38,7 +39,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="main-container max-w-6xl w-full p-8 md:p-24 flex flex-col items-center text-center relative overflow-hidden mb-12"
+        className="main-container max-w-6xl w-full p-6 md:p-24 flex flex-col items-center text-center relative overflow-hidden mb-12"
       >
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#7C3AED]/20 to-transparent" />
 
@@ -47,29 +48,29 @@ export default function Home() {
             <Sparkles className="w-4 h-4" />
             <span>New: AI Flashcard Generator</span>
           </span>
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] text-[#111114] dark:text-white mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] text-[#111114] dark:text-white mb-6">
             Exam <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9]">Fever</span>
           </h1>
         </div>
 
-        <p className="text-lg md:text-xl font-medium text-[#6B7280] dark:text-[#9CA3AF] max-w-2xl mb-12 leading-relaxed">
+        <p className="text-base md:text-xl font-medium text-[#6B7280] dark:text-[#9CA3AF] max-w-2xl mb-12 leading-relaxed px-4 md:px-0">
           Upload your PDFs, generate practice questions with AI, and take
           timed exams to master your subjects with cutting-edge technology.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full justify-center px-4 md:px-0">
           <Link
             href="/register"
-            className="group flex items-center justify-center gap-2 min-w-[200px] px-8 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9] hover:opacity-90 transition-all duration-300 shadow-lg shadow-violet-500/25 active:scale-95"
+            className="group flex items-center justify-center gap-2 w-full sm:w-auto min-w-[180px] px-6 py-3.5 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-sm md:text-base text-white bg-gradient-to-r from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9] hover:opacity-90 transition-all duration-300 shadow-lg shadow-violet-500/25 active:scale-95 whitespace-nowrap"
           >
-            <Sparkles className="w-5 h-5 transition-transform group-hover:rotate-12" />
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:rotate-12" />
             Get Started Free
           </Link>
           <Link
             href="/upload"
-            className="flex items-center justify-center gap-2 min-w-[200px] px-8 py-4 rounded-2xl font-bold text-foreground border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-300 active:scale-95"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto min-w-[180px] px-6 py-3.5 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-sm md:text-base text-foreground border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-300 active:scale-95 whitespace-nowrap"
           >
-            <Upload className="w-5 h-5" />
+            <Upload className="w-4 h-4 md:w-5 md:h-5" />
             Upload Your First PDF
           </Link>
         </div>
@@ -93,7 +94,7 @@ export default function Home() {
 
       {/* How ExamFever Works */}
       <div className="w-full max-w-7xl py-12 md:py-24 px-6">
-        <h2 className="text-4xl md:text-7xl font-black mb-12 md:mb-20 text-center gradient-text">
+        <h2 className="text-3xl md:text-7xl font-black mb-12 md:mb-20 text-center gradient-text">
           How ExamFever Works
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -123,12 +124,12 @@ export default function Home() {
       {/* Affiliate Showcase */}
       <AffiliateShowcase />
 
-      {/* Learn More */}
-      <div className="mt-12 mb-20 flex flex-col items-center gap-4 animate-bounce">
-        <span className="text-[10px] font-black tracking-[0.2em] text-[#9CA3AF] uppercase">Learn More</span>
-        <ChevronDown className="w-5 h-5 text-[#9CA3AF]" />
+      {/* Interactive Demo Section */}
+      <div className="mt-12 mb-20 w-full max-w-4xl mx-auto">
+        <DemoSection />
       </div>
 
     </div>
   )
 }
+
