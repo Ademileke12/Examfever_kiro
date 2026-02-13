@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { examResultSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,15 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id
     const body = await request.json()
+
+    const validation = examResultSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid input', details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
     const {
       examId,
       examTitle,
@@ -27,14 +37,7 @@ export async function POST(request: NextRequest) {
       startTime,
       endTime,
       bundleContext
-    } = body
-
-    if (!examId || score === undefined) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
+    } = validation.data
 
     const studyTimeMinutes = Math.round(timeSpent / 60)
 

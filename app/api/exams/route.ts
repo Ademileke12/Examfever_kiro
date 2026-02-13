@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateId } from '@/lib/utils'
 import { checkSubscriptionLimit, incrementUsage } from '@/lib/security/limit-check'
+import { examCreateSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    const validation = examCreateSchema.safeParse(body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid input', details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
     const {
       title,
       description,
@@ -23,14 +33,7 @@ export async function POST(request: NextRequest) {
       difficultyDistribution,
       questionTypes,
       selectedQuestions
-    } = body
-
-    if (!title || !selectedQuestions || selectedQuestions.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
+    } = validation.data
 
     // Check subscription limit BEFORE creating exam
     const limitCheck = await checkSubscriptionLimit('exam')
