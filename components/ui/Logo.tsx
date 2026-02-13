@@ -4,22 +4,22 @@ import { motion } from 'framer-motion'
 
 export function Logo({ className = "", showText = true }: { className?: string, showText?: boolean }) {
     return (
-        <div className={`flex items-center gap-2 group ${className}`}>
-            <div className="relative w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-violet-500/25 overflow-hidden">
+        <div className={`flex items-center gap-3 group ${className}`}>
+            <div className="relative w-10 h-10 bg-gradient-to-br from-[#d946ef] via-[#8b5cf6] to-[#0ea5e9] rounded-[14px] flex items-center justify-center shadow-lg shadow-violet-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-violet-500/40 overflow-hidden">
                 {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 z-20" />
 
                 {/* Icon */}
                 <svg
-                    width="24"
-                    height="24"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-white relative z-10"
+                    className="text-white relative z-10 drop-shadow-sm"
                 >
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                     <path d="M6 12v5c3 3 9 3 12 0v-5" />
