@@ -31,6 +31,13 @@ export const examResultSchema = z.object({
   bundleContext: z.record(z.string(), z.any()).optional()
 })
 
+export const paymentVerifySchema = z.object({
+  reference: z.string().min(1),
+  type: z.enum(['plan', 'addon']).optional(),
+  plan: z.enum(['standard', 'premium']).optional(),
+  id: z.string().optional()
+})
+
 export type UploadRequest = z.infer<typeof uploadRequestSchema>
 export type PDFFileValidation = z.infer<typeof pdfFileSchema>
 export type ExamCreateInput = z.infer<typeof examCreateSchema>

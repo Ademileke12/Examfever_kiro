@@ -1,36 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { affiliateManager } from '@/lib/affiliate/affiliate-manager'
-import { getUserId } from '@/lib/auth/user'
-// Actually, for API routes, we should use supabase.auth.getUser() as we just fixed.
+import { paymentVerifySchema } from '@/lib/validation/schemas'
+import { handleApiError } from '@/lib/security/error-handler'
 
-interface VerifyPayload {
-    reference: string
-    plan: 'standard' | 'premium'
+/**
+ * Subscription Verification API
+ * 
+ * POST /api/subscription/verify
+ * Validates Paystack payment and updates user subscription status.
+ */
+
+const PRICE_MAP: Record<string, number> = {
+    'standard': 3500,
+    'premium': 6300,
+    'package_1': 3000,
+    'package_2': 5500,
+    'package_3': 8500
 }
 
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
 
+        // 1. Secure Identity Verification
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return NextResponse.json(
-                { success: false, error: 'Unauthorized' },
-                { status: 401 }
-            )
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { reference, plan, type, id } = await request.json() as any
+        // 2. Input Validation
+        const body = await request.json()
+        const validation = paymentVerifySchema.safeParse(body)
 
-        if (!reference) {
+        if (!validation.success) {
             return NextResponse.json(
-                { success: false, error: 'Missing reference' },
+                { success: false, error: 'Invalid request data', details: validation.error.errors },
                 { status: 400 }
             )
         }
 
-        // 1. Verify with Paystack
+        const { reference, plan, type, id } = validation.data
+
+        // 3. Verify with Paystack
         const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
         if (!paystackSecretKey) {
             throw new Error('PAYSTACK_SECRET_KEY not configured')
@@ -51,31 +63,41 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        // 4. Security Check: Verify amount and customer email matches
         const amountPaid = paystackData.data.amount / 100 // Convert from kobo to Naira
+        const paystackCustomerEmail = paystackData.data.customer.email
 
-        // 2. Security Check: Verify amount matches the requested item to prevent price manipulation
-        const PRICE_MAP: Record<string, number> = {
-            'standard': 3500,
-            'premium': 6300,
-            'package_1': 3000,
-            'package_2': 5500,
-            'package_3': 8500
+        // Ensure the payment belongs to the authenticated user
+        if (paystackCustomerEmail.toLowerCase() !== user.email?.toLowerCase()) {
+            console.error(`[SECURITY] Email mismatch. User: ${user.email}, Paystack: ${paystackCustomerEmail}`)
+            return NextResponse.json(
+                { success: false, error: 'Payment email mismatch. Please use your account email.' },
+                { status: 400 }
+            )
         }
 
+        // Enforce strict price checking
         const requestedId = type === 'plan' ? id : (type === 'addon' ? id : plan)
-        const expectedPrice = PRICE_MAP[requestedId]
+        if (!requestedId) {
+            return NextResponse.json({ success: false, error: 'Invalid plan or addon selection' }, { status: 400 })
+        }
 
-        if (expectedPrice && amountPaid < expectedPrice) {
-            console.error(`[SECURITY] Price mismatch. Paid: ${amountPaid}, Expected: ${expectedPrice} for ${requestedId}`)
+        const expectedPrice = PRICE_MAP[requestedId]
+        if (!expectedPrice) {
+            console.error(`[SECURITY] Unknown item ID: ${requestedId}`)
+            return NextResponse.json({ success: false, error: 'Invalid item selected' }, { status: 400 })
+        }
+
+        if (amountPaid < expectedPrice) {
+            console.error(`[SECURITY] Price manipulation detected. Paid: ${amountPaid}, Expected: ${expectedPrice} for ${requestedId}`)
             return NextResponse.json(
                 { success: false, error: 'Payment amount mismatch. Please contact support.' },
                 { status: 400 }
             )
         }
 
-        // 3. Logic based on Type
+        // 5. Subscription/Addon Logic
         if (type === 'plan' || (!type && plan)) {
-            // Plan Logic
             const planName = type === 'plan' ? id : plan
             let uploads = 2
             let exams = 2
@@ -109,21 +131,16 @@ export async function POST(request: NextRequest) {
                     onConflict: 'user_id'
                 })
 
-            if (subError) {
-                console.error('Subscription update error:', subError)
-                throw subError
-            }
+            if (subError) throw subError
 
-            // Affiliate Logic: Award commission if user was referred
+            // Award Commissions
             try {
                 await affiliateManager.awardCommissionIfEligible(user.id, amountPaid, reference, request)
             } catch (affError) {
                 console.error('Affiliate commission awarding failed:', affError)
-                // We don't fail the verification if affiliate logic fails
             }
 
         } else if (type === 'addon') {
-            // Addon Logic
             const { data: currentSub } = await supabase
                 .from('user_subscriptions')
                 .select('*')
@@ -161,13 +178,10 @@ export async function POST(request: NextRequest) {
                     onConflict: 'user_id'
                 })
 
-            if (subError) {
-                console.error('Addon update error:', subError)
-                throw subError
-            }
+            if (subError) throw subError
         }
 
-        // 3. Log Transaction
+        // 6. Log Transaction
         const { error: txError } = await supabase
             .from('payment_transactions')
             .insert({
@@ -179,24 +193,11 @@ export async function POST(request: NextRequest) {
                 metadata: paystackData.data
             })
 
-        if (txError) {
-            console.error('Transaction log error:', txError)
-            // We don't necessarily want to fail the whole thing if just logging fails, 
-            // but for now let's keep it visible
-        }
+        if (txError) console.error('Transaction log error:', txError)
 
         return NextResponse.json({ success: true })
 
-    } catch (error: any) {
-        console.error('Verification error details:', {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-        })
-        return NextResponse.json(
-            { success: false, error: error.message || 'Internal server error' },
-            { status: 500 }
-        )
+    } catch (error) {
+        return handleApiError(error, 'SubscriptionVerify')
     }
 }
