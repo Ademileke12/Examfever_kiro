@@ -17,20 +17,8 @@ type LoginFormData = z.infer<typeof loginSchema>
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const { signIn } = useAuthContext()
   const router = useRouter()
-  
-  // Check for mobile on client side only
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   const {
     register,
@@ -56,27 +44,12 @@ export function LoginForm() {
   }
 
   return (
-    <div style={{ 
-      width: '100%', 
-      maxWidth: '28rem', 
-      margin: '0 auto',
-      padding: isMobile ? '1rem' : '0'
-    }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: isMobile ? '1.25rem' : '1.5rem'
-      }}>
+    <div className="w-full max-w-md mx-auto p-4 md:p-0">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 md:gap-6">
         <div>
-          <label 
-            htmlFor="email" 
-            style={{ 
-              display: 'block', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: '0.5rem' 
-            }}
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Email
           </label>
@@ -84,49 +57,20 @@ export function LoginForm() {
             {...register('email')}
             type="email"
             id="email"
-            style={{
-              width: '100%',
-              padding: isMobile ? '1rem 1rem' : '0.75rem 1rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.5rem',
-              fontSize: isMobile ? '1rem' : '0.875rem',
-              backgroundColor: 'white',
-              color: '#000000',
-              outline: 'none',
-              transition: 'border-color 0.2s, box-shadow 0.2s',
-              minHeight: isMobile ? '44px' : 'auto'
-            }}
+            className="w-full px-4 py-3 md:py-3 border border-gray-300 rounded-lg text-base md:text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[48px] md:min-h-[auto]"
             placeholder="Enter your email"
-            onFocus={(e) => {
-              (e.target as HTMLInputElement).style.borderColor = '#2563eb'
-              ;(e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
-            }}
-            onBlur={(e) => {
-              (e.target as HTMLInputElement).style.borderColor = '#d1d5db'
-              ;(e.target as HTMLInputElement).style.boxShadow = 'none'
-            }}
           />
           {errors.email && (
-            <p style={{ 
-              marginTop: '0.5rem', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              color: '#dc2626' 
-            }}>
+            <p className="mt-1 text-sm text-red-600">
               {errors.email.message}
             </p>
           )}
         </div>
 
         <div>
-          <label 
-            htmlFor="password" 
-            style={{ 
-              display: 'block', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: '0.5rem' 
-            }}
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Password
           </label>
@@ -134,48 +78,18 @@ export function LoginForm() {
             {...register('password')}
             type="password"
             id="password"
-            style={{
-              width: '100%',
-              padding: isMobile ? '1rem 1rem' : '0.75rem 1rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.5rem',
-              fontSize: isMobile ? '1rem' : '0.875rem',
-              backgroundColor: 'white',
-              color: '#000000',
-              outline: 'none',
-              transition: 'border-color 0.2s, box-shadow 0.2s',
-              minHeight: isMobile ? '44px' : 'auto'
-            }}
+            className="w-full px-4 py-3 md:py-3 border border-gray-300 rounded-lg text-base md:text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[48px] md:min-h-[auto]"
             placeholder="Enter your password"
-            onFocus={(e) => {
-              (e.target as HTMLInputElement).style.borderColor = '#2563eb'
-              ;(e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
-            }}
-            onBlur={(e) => {
-              (e.target as HTMLInputElement).style.borderColor = '#d1d5db'
-              ;(e.target as HTMLInputElement).style.boxShadow = 'none'
-            }}
           />
           {errors.password && (
-            <p style={{ 
-              marginTop: '0.5rem', 
-              fontSize: isMobile ? '0.875rem' : '0.875rem', 
-              color: '#dc2626' 
-            }}>
+            <p className="mt-1 text-sm text-red-600">
               {errors.password.message}
             </p>
           )}
         </div>
 
         {error && (
-          <div style={{
-            padding: isMobile ? '1rem' : '0.75rem',
-            fontSize: isMobile ? '0.875rem' : '0.875rem',
-            color: '#dc2626',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.5rem'
-          }}>
+          <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
             {error}
           </div>
         )}
@@ -183,33 +97,8 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: isMobile ? '1rem 1rem' : '0.75rem 1rem',
-            border: 'none',
-            borderRadius: '0.5rem',
-            fontSize: isMobile ? '1rem' : '0.875rem',
-            fontWeight: '600',
-            color: 'white',
-            backgroundColor: loading ? '#9ca3af' : '#2563eb',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-            opacity: loading ? 0.5 : 1,
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#1d4ed8'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'
-            }
-          }}
+          className={`w-full flex justify-center items-center py-3 md:py-3 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors min-h-[48px] md:min-h-[auto] ${loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
         >
           {loading ? 'Signing in...' : 'Sign in'}
         </button>

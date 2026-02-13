@@ -21,19 +21,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const { signUp } = useAuthContext()
-
-  // Check for mobile on client side only
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   const {
     register,
@@ -105,46 +93,24 @@ export function RegisterForm() {
 
   if (success) {
     return (
-      <div style={{
-        width: '100%',
-        maxWidth: '28rem',
-        margin: '0 auto',
-        padding: isMobile ? '1rem' : '0'
-      }}>
-        <div style={{ padding: isMobile ? '2rem 1.5rem' : '1.5rem', textAlign: 'center' }}>
-          <div style={{ marginBottom: isMobile ? '1.5rem' : '1rem' }}>
-            <div style={{
-              margin: '0 auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: isMobile ? '4rem' : '3rem',
-              width: isMobile ? '4rem' : '3rem',
-              borderRadius: '50%',
-              backgroundColor: '#dcfce7'
-            }}>
-              <svg style={{
-                height: isMobile ? '2rem' : '1.5rem',
-                width: isMobile ? '2rem' : '1.5rem',
-                color: '#16a34a'
-              }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="w-full max-w-md mx-auto p-4 md:p-0">
+        <div className="p-8 md:p-6 text-center">
+          <div className="mb-6 md:mb-4">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 md:h-12 md:w-12 rounded-full bg-green-100">
+              <svg
+                className="h-8 w-8 md:h-6 md:w-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
-          <h3 style={{
-            fontSize: isMobile ? '1.25rem' : '1.125rem',
-            fontWeight: '600',
-            color: '#111827',
-            marginBottom: isMobile ? '1rem' : '0.5rem'
-          }}>
+          <h3 className="text-xl md:text-lg font-semibold text-gray-900 mb-4 md:mb-2">
             Check your email
           </h3>
-          <p style={{
-            fontSize: isMobile ? '1rem' : '0.875rem',
-            color: '#6b7280',
-            lineHeight: '1.6'
-          }}>
+          <p className="text-base md:text-sm text-gray-500 leading-relaxed">
             We've sent you a confirmation link. Please check your email and click the link to activate your account.
           </p>
         </div>
@@ -152,51 +118,13 @@ export function RegisterForm() {
     )
   }
 
-  const inputStyle = {
-    width: '100%',
-    padding: isMobile ? '1rem 1rem' : '0.75rem 1rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.5rem',
-    fontSize: isMobile ? '1rem' : '0.875rem',
-    backgroundColor: 'white',
-    color: '#000000',
-    outline: 'none',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-    minHeight: isMobile ? '44px' : 'auto'
-  }
-
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = '#2563eb'
-    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
-  }
-
-  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = '#d1d5db'
-    e.target.style.boxShadow = 'none'
-  }
-
   return (
-    <div style={{
-      width: '100%',
-      maxWidth: '28rem',
-      margin: '0 auto',
-      padding: isMobile ? '1rem' : '0'
-    }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: isMobile ? '1.25rem' : '1.5rem'
-      }}>
+    <div className="w-full max-w-md mx-auto p-4 md:p-0">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 md:gap-6">
         <div>
           <label
             htmlFor="email"
-            style={{
-              display: 'block',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Email
           </label>
@@ -204,17 +132,11 @@ export function RegisterForm() {
             {...register('email')}
             type="email"
             id="email"
-            style={inputStyle}
+            className="w-full px-4 py-3 md:py-3 border border-gray-300 rounded-lg text-base md:text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[48px] md:min-h-[auto]"
             placeholder="Enter your email"
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
           />
           {errors.email && (
-            <p style={{
-              marginTop: '0.5rem',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              color: '#dc2626'
-            }}>
+            <p className="mt-1 text-sm text-red-600">
               {errors.email.message}
             </p>
           )}
@@ -223,13 +145,7 @@ export function RegisterForm() {
         <div>
           <label
             htmlFor="password"
-            style={{
-              display: 'block',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Password
           </label>
@@ -237,17 +153,11 @@ export function RegisterForm() {
             {...register('password')}
             type="password"
             id="password"
-            style={inputStyle}
+            className="w-full px-4 py-3 md:py-3 border border-gray-300 rounded-lg text-base md:text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[48px] md:min-h-[auto]"
             placeholder="Enter your password"
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
           />
           {errors.password && (
-            <p style={{
-              marginTop: '0.5rem',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              color: '#dc2626'
-            }}>
+            <p className="mt-1 text-sm text-red-600">
               {errors.password.message}
             </p>
           )}
@@ -256,13 +166,7 @@ export function RegisterForm() {
         <div>
           <label
             htmlFor="confirmPassword"
-            style={{
-              display: 'block',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Confirm Password
           </label>
@@ -270,31 +174,18 @@ export function RegisterForm() {
             {...register('confirmPassword')}
             type="password"
             id="confirmPassword"
-            style={inputStyle}
+            className="w-full px-4 py-3 md:py-3 border border-gray-300 rounded-lg text-base md:text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[48px] md:min-h-[auto]"
             placeholder="Confirm your password"
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
           />
           {errors.confirmPassword && (
-            <p style={{
-              marginTop: '0.5rem',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              color: '#dc2626'
-            }}>
+            <p className="mt-1 text-sm text-red-600">
               {errors.confirmPassword.message}
             </p>
           )}
         </div>
 
         {error && (
-          <div style={{
-            padding: isMobile ? '1rem' : '0.75rem',
-            fontSize: isMobile ? '0.875rem' : '0.875rem',
-            color: '#dc2626',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.5rem'
-          }}>
+          <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
             {error}
           </div>
         )}
@@ -302,33 +193,8 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: isMobile ? '1rem 1rem' : '0.75rem 1rem',
-            border: 'none',
-            borderRadius: '0.5rem',
-            fontSize: isMobile ? '1rem' : '0.875rem',
-            fontWeight: '600',
-            color: 'white',
-            backgroundColor: loading ? '#9ca3af' : '#2563eb',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-            opacity: loading ? 0.5 : 1,
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#1d4ed8'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'
-            }
-          }}
+          className={`w-full flex justify-center items-center py-3 md:py-3 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors min-h-[48px] md:min-h-[auto] ${loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
         >
           {loading ? 'Creating account...' : 'Create account'}
         </button>

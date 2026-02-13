@@ -40,68 +40,68 @@ export default function PDFUploadProgress({ uploads, questionResults }: PDFUploa
   if (uploads.length === 0) return null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827' }}>
+    <div className="flex flex-col gap-4">
+      <h3 className="text-lg font-semibold text-gray-900">
         Upload Progress
       </h3>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+      <div className="flex flex-col gap-3">
         {uploads.map((upload) => {
           const Icon = statusIcons[upload.status]
-          const color = statusColors[upload.status]
+          const colorClass = {
+            idle: 'text-gray-500',
+            validating: 'text-amber-500',
+            uploading: 'text-blue-600',
+            processing: 'text-blue-600',
+            completed: 'text-green-600',
+            error: 'text-red-600'
+          }[upload.status]
+
           const message = statusMessages[upload.status]
-          
+
           return (
             <div
               key={upload.fileId}
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '0.5rem',
-                border: '1px solid #e5e7eb',
-                padding: '1rem'
-              }}
+              className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Icon style={{ width: '1rem', height: '1rem', color }} />
-                  <span style={{ fontWeight: '500', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1 mr-4">
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${colorClass}`} />
+                  <span className="font-medium text-gray-900 truncate">
                     {upload.fileName}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                <span className="text-sm text-gray-500 flex-shrink-0">
                   {upload.progress}%
                 </span>
               </div>
-              
-              <div style={{ width: '100%', backgroundColor: '#e5e7eb', borderRadius: '9999px', height: '0.5rem', marginBottom: '0.5rem' }}>
-                <div 
-                  style={{ 
-                    height: '0.5rem', 
-                    backgroundColor: '#2563eb', 
-                    borderRadius: '9999px', 
-                    width: `${upload.progress}%`,
-                    transition: 'width 0.3s ease'
-                  }}
+
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
+                <div
+                  className="h-2 bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${upload.progress}%` }}
                 />
               </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                <span style={{ color }}>
+
+              <div className="flex items-start justify-between text-sm gap-2">
+                <span className={`${colorClass} break-words flex-1`}>
                   {upload.error || message}
                 </span>
                 {upload.endTime && (
-                  <span style={{ color: '#6b7280' }}>
+                  <span className="text-gray-500 flex-shrink-0 whitespace-nowrap ml-2">
                     {formatDuration(upload.startTime, upload.endTime)}
                   </span>
                 )}
               </div>
-              
+
               {/* Question generation status */}
               {upload.status === 'completed' && questionResults?.[upload.fileId] && (
-                <QuestionGenerationStatus
-                  result={questionResults[upload.fileId]}
-                  fileName={upload.fileName}
-                />
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <QuestionGenerationStatus
+                    result={questionResults[upload.fileId]}
+                    fileName={upload.fileName}
+                  />
+                </div>
               )}
             </div>
           )
@@ -113,11 +113,11 @@ export default function PDFUploadProgress({ uploads, questionResults }: PDFUploa
 
 function formatDuration(start: Date, end: Date): string {
   const duration = Math.round((end.getTime() - start.getTime()) / 1000)
-  
+
   if (duration < 60) {
     return `${duration}s`
   }
-  
+
   const minutes = Math.floor(duration / 60)
   const seconds = duration % 60
   return `${minutes}m ${seconds}s`
