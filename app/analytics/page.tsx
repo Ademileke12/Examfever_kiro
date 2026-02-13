@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
     updateTimeRange
   } = useAnalytics(30)
 
-  const { subscription, loading: subLoading } = useSubscription()
+  const { subscription, loading: subLoading, error: subError, refetchStatus } = useSubscription()
   const { trackActivity } = useActivityTracker()
 
   React.useEffect(() => {
@@ -53,6 +53,60 @@ export default function AnalyticsPage() {
               className="magnetic glass glass-hover px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-glow transition-all duration-300"
             >
               Try Again
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
+
+  if (subError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
+        <ParticleBackground />
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center min-h-[400px] text-center"
+          >
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold gradient-text mb-2">Subscription Check Failed</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">
+              We couldn't verify your subscription status. Please check your connection.
+            </p>
+            <button
+              onClick={() => refetchStatus()}
+              className="magnetic glass glass-hover px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-glow transition-all duration-300"
+            >
+              Retry
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
+
+  if (subError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
+        <ParticleBackground />
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center min-h-[400px] text-center"
+          >
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold gradient-text mb-2">Subscription Check Failed</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">
+              We couldn't verify your subscription status. Please check your connection.
+            </p>
+            <button
+              onClick={() => refetchStatus()}
+              className="magnetic glass glass-hover px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-glow transition-all duration-300"
+            >
+              Retry
             </button>
           </motion.div>
         </div>

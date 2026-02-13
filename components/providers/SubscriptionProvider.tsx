@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal'
-import { createClient } from '@/lib/supabase/auth'
+import { useAuth } from '@/hooks/useAuth'
 
 interface SubscriptionData {
     plan_tier: 'free' | 'standard' | 'premium'
@@ -22,25 +22,32 @@ interface SubscriptionContextType {
     closeModal: () => void
     refetchStatus: () => Promise<void>
     checkLimit: (type: 'upload' | 'exam') => boolean
+    error: string | null
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined)
 
 export const SubscriptionProvider = ({ children }: { children: React.ReactNode }) => {
+    const { user, loading: authLoading } = useAuth()
     const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const supabase = createClient()
 
     const fetchStatus = useCallback(async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) {
-                setSubscription(null)
-                setLoading(false)
-                return
-            }
+        if (authLoading) return // Wait for auth to initialize
 
+        // Reset error on new fetch attempt
+        setError(null)
+        setLoading(true)
+
+        if (!user) {
+            setSubscription(null)
+            setLoading(false)
+            return
+        }
+
+        try {
             const response = await fetch('/api/subscription/status')
             const result = await response.json()
 
@@ -61,13 +68,17 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
                         localStorage.setItem('subscription_modal_seen', 'true')
                     }
                 }
+            } else {
+                console.error('Failed to fetch subscription:', result.error)
+                setError(result.error || 'Failed to load subscription')
             }
         } catch (error) {
             console.error('Error fetching subscription status:', error)
+            setError('Connection failed')
         } finally {
             setLoading(false)
         }
-    }, [supabase])
+    }, [user, authLoading])
 
     useEffect(() => {
         fetchStatus()
@@ -96,7 +107,8 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
                 openModal: () => setIsModalOpen(true),
                 closeModal: () => setIsModalOpen(false),
                 refetchStatus: fetchStatus,
-                checkLimit
+                checkLimit,
+                error
             }}
         >
             {children}
