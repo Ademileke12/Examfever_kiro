@@ -1,16 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, Lock } from 'lucide-react'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
+import { Logo } from './Logo'
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, signOut } = useAuth()
@@ -41,11 +43,8 @@ export function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-[#0A0A0C]/80 backdrop-blur-md border-b dark:border-white/5' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 bg-[#7C3AED] rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">ExamFever</span>
+        <Link href="/" className="block">
+          <Logo />
         </Link>
 
         {/* Desktop Nav */}
@@ -77,7 +76,10 @@ export function Navbar() {
             <ThemeToggle />
             {user ? (
               <button
-                onClick={() => signOut()}
+                onClick={async () => {
+                  await signOut()
+                  router.push('/login')
+                }}
                 className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] transition-colors"
               >
                 Log Out
@@ -154,9 +156,10 @@ export function Navbar() {
                   <ThemeToggle />
                   {user ? (
                     <button
-                      onClick={() => {
-                        signOut()
+                      onClick={async () => {
+                        await signOut()
                         setIsMobileMenuOpen(false)
+                        router.push('/login')
                       }}
                       className="text-sm font-bold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED]"
                     >

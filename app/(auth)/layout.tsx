@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { Logo } from '@/components/ui/Logo'
 
 export default function AuthLayout({
   children,
@@ -18,11 +19,8 @@ export default function AuthLayout({
         >
           {/* Branding */}
           <div className="flex flex-col items-center gap-4 mb-12">
-            <Link href="/" className="flex flex-col items-center gap-2 group">
-              <div className="w-12 h-12 bg-[#7C3AED] rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>
-              </div>
-              <span className="text-2xl font-black tracking-tighter text-foreground">ExamFever</span>
+            <Link href="/" className="block hover:opacity-90 transition-opacity">
+              <Logo className="scale-125" showText={true} />
             </Link>
           </div>
 
