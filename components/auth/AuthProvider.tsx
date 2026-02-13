@@ -10,9 +10,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth()
 
-  // Automatic logout after 30 minutes of inactivity
+  // Automatic logout after 1.5 minutes of inactivity
   useInactivityTimeout({
-    timeoutMs: 30 * 60 * 1000, // 30 minutes
+    timeoutMs: 1.5 * 60 * 1000, // 1.5 minutes
     onTimeout: () => {
       console.log('Session timed out due to inactivity.')
       auth.signOut()
