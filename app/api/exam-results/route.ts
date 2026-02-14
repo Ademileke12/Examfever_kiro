@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { examResultSchema } from '@/lib/validation/schemas'
+import { incrementUsage } from '@/lib/security/limit-check'
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,6 +70,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Increment usage counter only upon successful submission
+    await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,

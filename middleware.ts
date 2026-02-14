@@ -72,12 +72,12 @@ export async function middleware(request: NextRequest) {
     // 1. Content Security Policy (Strict but functional for Next.js)
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.paystack.co;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.paystack.co https://checkout.paystack.com https://standard.paystack.co;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://*.supabase.co;
+      img-src 'self' blob: data: https://*.supabase.co https://checkout.paystack.com https://standard.paystack.co;
       font-src 'self' https://fonts.gstatic.com;
-      frame-src 'self' https://js.paystack.co;
-      connect-src 'self' https://*.supabase.co https://api.paystack.co https://api.groq.com;
+      frame-src 'self' https://js.paystack.co https://checkout.paystack.com https://standard.paystack.co;
+      connect-src 'self' https://*.supabase.co https://api.paystack.co https://api.groq.com https://checkout.paystack.com https://standard.paystack.co;
     `.replace(/\s{2,}/g, ' ').trim()
 
     headers.set('Content-Security-Policy', cspHeader)

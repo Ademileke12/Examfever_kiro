@@ -177,7 +177,8 @@ export async function POST(request: NextRequest) {
 
     if (examQuestionsError) throw new Error(examQuestionsError.message)
 
-    await incrementUsage('exam')
+    // Increment usage happens on submission
+    // await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,

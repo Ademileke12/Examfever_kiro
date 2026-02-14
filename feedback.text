@@ -1,0 +1,23 @@
+here is a feeback from a tester of the platform, comments on any line are made by me
+
+
+Some stuff I’ve noticed:
+
+• The site is really clean, both the sections and some element animations. Love it 
+
+• Lovely option to add the dark/light mode toggle
+
+• The email confirmation link is broken, think it wasn’t hosted properly - local host is a part of the string. comment:its mean to redirect users to login page of website hosting not localhost which is https://examfever-kiro.vercel.app/login
+
+• The payment options, both for the bundles and plans keep buffering, and for quite a long period at that, I waited for about 15-20 seconds comment: the paystack payment doesn't load just keeps buffering
+
+• Some pages are dud, like the privacy policy and ToS, but I’m sure it’s cause it’s still in testing phase - so not a full product yet.comment: we can ignore this for now 
+
+• PDF upload bar didn’t move for quite a while, it shouldn’t be constant. Just to let the user know it’s actually working comment: here i believe we should implement as very cool uploading animation where the users can be sure that the AI is uploading and generating the questions
+• I left an exam while it was ongoing, nothing happened. No warning screen or anything. And even upon returning to the screen, the exam history was blank, think that can be worked on. comment: a warning if user tries to exit exams or clicks any button on navigation, it should first warn and ask the user if they are sure of exiting then loads the page clicked
+
+• The UI/UX is nice, flow is really good
+
+- sometimes while the user logins in and clicks analytics page it loads login page check that bug
+- another bug the count for number of exams left should only be deducted if the user clicks submit exam
+- we also want to implement where users can see the answers to every exams they take after getting graded

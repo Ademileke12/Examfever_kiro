@@ -52,7 +52,9 @@ export function useAuth(): AuthContextType {
       email: credentials.email,
       password: credentials.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: typeof window !== 'undefined'
+          ? `${window.location.origin}/api/auth/callback`
+          : 'https://examfever-kiro.vercel.app/api/auth/callback',
         data: {
           referred_by: credentials.referralCode
         }

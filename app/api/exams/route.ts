@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
       throw new Error(questionsError.message || 'Failed to insert exam questions')
     }
 
-    // Increment usage counter after successful exam creation
-    await incrementUsage('exam')
+    // Increment usage counter will now happen on exam submission
+    // await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,

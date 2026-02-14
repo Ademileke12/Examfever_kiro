@@ -1,6 +1,7 @@
 'use client'
 
-import { CheckCircle, XCircle, Wand2, Database, Clock, Zap } from 'lucide-react'
+import { CheckCircle, XCircle, Wand2, Database, Clock, Zap, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface QuestionGenerationResult {
   success: boolean
@@ -21,9 +22,9 @@ interface QuestionGenerationStatusProps {
   totalBatches?: number
 }
 
-export default function QuestionGenerationStatus({ 
-  result, 
-  fileName, 
+export default function QuestionGenerationStatus({
+  result,
+  fileName,
   isGenerating = false,
   currentBatch = 0,
   totalBatches = 0
@@ -31,119 +32,104 @@ export default function QuestionGenerationStatus({
   if (!result && !isGenerating) return null
 
   return (
-    <div style={{ 
-      marginTop: '1rem', 
-      padding: '1rem', 
-      backgroundColor: '#f9fafb', 
-      borderRadius: '0.5rem', 
-      border: '1px solid #e5e7eb' 
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <Wand2 style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
-        <span style={{ fontWeight: '500', color: '#111827' }}>
+    <div className="mt-4 p-4 rounded-2xl glass border border-white/10 dark:border-white/5 shadow-inner">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+          <Wand2 className="w-4 h-4 text-primary" />
+        </div>
+        <span className="font-bold text-readable text-sm sm:text-base">
           AI Question Generation
         </span>
       </div>
 
       {isGenerating && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb' }}>
-            <Clock style={{ width: '1rem', height: '1rem' }} />
-            <span style={{ fontSize: '0.875rem' }}>
-              Generating questions in batches of 5...
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-primary">
+            <Clock className="w-4 h-4 animate-pulse" />
+            <span className="text-xs sm:text-sm font-medium">
+              Generating questions in batches...
             </span>
           </div>
-          
+
           {totalBatches > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280' }}>
-              <Zap style={{ width: '1rem', height: '1rem' }} />
-              <span style={{ fontSize: '0.875rem' }}>
-                Batch {currentBatch} of {totalBatches} - Using Google Gemini AI (Extended processing time)
+            <div className="flex items-center gap-2 text-readable-muted">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <span className="text-[10px] sm:text-xs">
+                Batch {currentBatch} of {totalBatches} • Using Gemini AI
               </span>
             </div>
           )}
 
-          <div style={{ 
-            marginTop: '0.5rem',
-            width: '100%',
-            height: '0.5rem',
-            backgroundColor: '#e5e7eb',
-            borderRadius: '0.25rem',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: totalBatches > 0 ? `${(currentBatch / totalBatches) * 100}%` : '0%',
-              height: '100%',
-              backgroundColor: '#2563eb',
-              transition: 'width 0.3s ease-in-out'
-            }} />
+          <div className="w-full h-1.5 bg-white/5 dark:bg-black/20 rounded-full overflow-hidden border border-white/5">
+            <motion.div
+              className="h-full bg-primary shadow-glow"
+              initial={{ width: 0 }}
+              animate={{ width: totalBatches > 0 ? `${(currentBatch / totalBatches) * 100}%` : '20%' }}
+              transition={{ duration: 0.5 }}
+            />
           </div>
         </div>
       )}
 
       {result && result.success ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#16a34a' }}>
-            <CheckCircle style={{ width: '1rem', height: '1rem' }} />
-            <span style={{ fontSize: '0.875rem' }}>
-              Generated {result.questionsGenerated} questions from {fileName}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-3 text-green-600 dark:text-green-400">
+            <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold leading-tight mb-1">
+                Generated {result.questionsGenerated} questions
+              </p>
+              <p className="text-[10px] sm:text-xs opacity-80 truncate">
+                From: {fileName}
+              </p>
               {result.metadata?.model && (
-                <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
-                  using {result.metadata.model === 'enhanced-local-generator' ? 'Enhanced Local AI' : result.metadata.model}
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest">
+                    {result.metadata.model === 'enhanced-local-generator' ? 'Local AI Core' : result.metadata.model}
+                  </span>
                   {result.metadata.model === 'enhanced-local-generator' && (
-                    <span style={{ color: '#16a34a', marginLeft: '0.25rem' }}>⚡ (Offline)</span>
+                    <span className="text-[10px]">⚡</span>
                   )}
-                </span>
+                </div>
               )}
-            </span>
+            </div>
           </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#16a34a' }}>
-            <Database style={{ width: '1rem', height: '1rem' }} />
-            <span style={{ fontSize: '0.875rem' }}>
-              Saved {result.questionsSaved} questions to your question bank
+
+          <div className="flex items-center gap-3 text-green-600 dark:text-green-400">
+            <Database className="w-4 h-4 shrink-0" />
+            <span className="text-xs sm:text-sm font-medium">
+              Saved {result.questionsSaved} to question bank
             </span>
           </div>
 
           {result.metadata?.processingTime && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280' }}>
-              <Clock style={{ width: '1rem', height: '1rem' }} />
-              <span style={{ fontSize: '0.875rem' }}>
-                Processing time: {Math.round(result.metadata.processingTime / 1000)}s
+            <div className="flex items-center gap-3 text-readable-muted">
+              <Clock className="w-4 h-4 shrink-0" />
+              <span className="text-xs sm:text-sm">
+                Efficiency: {Math.round(result.metadata.processingTime / 1000)}s
               </span>
             </div>
           )}
 
-          <div style={{ 
-            marginTop: '0.75rem', 
-            padding: '0.75rem', 
-            backgroundColor: '#eff6ff', 
-            borderRadius: '0.375rem', 
-            border: '1px solid #bfdbfe' 
-          }}>
-            <p style={{ fontSize: '0.875rem', color: '#1e40af' }}>
-              ✨ Your questions are ready! You can now create exams from your question bank.
+          <div className="mt-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+            <p className="text-xs sm:text-sm text-primary font-medium flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Your questions are ready for exam creation!
             </p>
           </div>
         </div>
       ) : result && !result.success ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#dc2626' }}>
-            <XCircle style={{ width: '1rem', height: '1rem' }} />
-            <span style={{ fontSize: '0.875rem' }}>
-              AI question generation failed: {result.error}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-3 text-red-600 dark:text-red-400">
+            <XCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <span className="text-xs sm:text-sm font-bold leading-tight">
+              Generation failed: {result.error}
             </span>
           </div>
-          
-          <div style={{ 
-            marginTop: '0.75rem', 
-            padding: '0.75rem', 
-            backgroundColor: '#fef3c7', 
-            borderRadius: '0.375rem', 
-            border: '1px solid #fbbf24' 
-          }}>
-            <p style={{ fontSize: '0.875rem', color: '#92400e' }}>
-              📄 PDF processed successfully! Text extracted and ready for manual question creation.
+
+          <div className="mt-2 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
+            <p className="text-xs sm:text-sm text-amber-600 dark:text-amber-400 font-medium">
+              📄 Text extracted successfully. You can still create questions manually.
             </p>
           </div>
         </div>

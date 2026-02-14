@@ -19,35 +19,7 @@ TASK: Analyze the relevant files in my project and rewrite the code to fix this 
 
 ---
 
-## Fix #2: Payment Amount Manipulation
 
-**Issue**: The `subscription.verify` route is vulnerable to payment amount manipulation attacks, as an attacker can modify the `amount` parameter to pay a lower amount.
-
-### 📋 Copy & Paste Prompt:
-```
-Act as a Senior Security Engineer. I have a code issue in my project.
-
-ISSUE: Payment Amount Manipulation - The `subscription.verify` route is vulnerable to payment amount manipulation attacks, as an attacker can modify the `amount` parameter to pay a lower amount.
-
-TASK: Analyze the relevant files in my project and rewrite the code to fix this issue according to industry best practices. Ensure the fix is secure and efficient.
-```
-
----
-
-## Fix #3: Lack of Input Validation
-
-**Issue**: The `subscription.verify` route does not validate the `reference` and `type` parameters, which can lead to security vulnerabilities.
-
-### 📋 Copy & Paste Prompt:
-```
-Act as a Senior Security Engineer. I have a code issue in my project.
-
-ISSUE: Lack of Input Validation - The `subscription.verify` route does not validate the `reference` and `type` parameters, which can lead to security vulnerabilities.
-
-TASK: Analyze the relevant files in my project and rewrite the code to fix this issue according to industry best practices. Ensure the fix is secure and efficient.
-```
-
----
 
 ## Fix #4: Hardcoded Secrets
 
@@ -79,3 +51,32 @@ TASK: Analyze the relevant files in my project and rewrite the code to fix this 
 
 ---
 
+## Fix #2: Payment Amount Manipulation
+
+**Issue**: The `subscription.verify` route is vulnerable to payment amount manipulation attacks, as an attacker can modify the `amount` parameter to pay a lower amount.
+
+### 📋 Copy & Paste Prompt:
+```
+Act as a Senior Security Engineer. I have a code issue in my project.
+
+ISSUE: Payment Amount Manipulation - The `subscription.verify` route is vulnerable to payment amount manipulation attacks, as an attacker can modify the `amount` parameter to pay a lower amount.
+
+TASK: Analyze the relevant files in my project and rewrite the code to fix this issue according to industry best practices. Ensure the fix is secure and efficient.
+```
+
+---
+
+## Fix #3: Lack of Input Validation
+
+**Issue**: The `subscription.verify` route does not validate the `reference` and `type` parameters, which can lead to security vulnerabilities.
+
+### 📋 Copy & Paste Prompt:
+```
+Act as a Senior Security Engineer. I have a code issue in my project.
+
+ISSUE: Lack of Input Validation - The `subscription.verify` route does not validate the `reference` and `type` parameters, which can lead to security vulnerabilities.
+
+TASK: Analyze the relevant files in my project and rewrite the code to fix this issue according to industry best practices. Ensure the fix is secure and efficient.
+```
+
+---

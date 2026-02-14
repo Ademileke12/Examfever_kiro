@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, Lock } from 'lucide-react'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { Logo } from './Logo'
+import { useExam } from '@/components/providers/ExamProvider'
+import { ExamExitModal } from '@/components/exam/ExamExitModal'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -17,6 +19,27 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, signOut } = useAuth()
   const { subscription } = useSubscription()
+  const { isExamActive, setIsExamActive } = useExam()
+
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false)
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (isExamActive && pathname === '/exam') {
+      e.preventDefault()
+      setPendingHref(href)
+      setIsExitModalOpen(true)
+    }
+  }
+
+  const confirmExit = () => {
+    setIsExamActive(false)
+    setIsExitModalOpen(false)
+    if (pendingHref) {
+      router.push(pendingHref)
+      setPendingHref(null)
+    }
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +66,7 @@ export function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-[#0A0A0C]/80 backdrop-blur-md border-b dark:border-white/5' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="block">
+        <Link href="/" onClick={(e) => handleNavClick(e, '/')} className="block">
           <Logo />
         </Link>
 
@@ -55,6 +78,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(e) => handleNavClick(e, item.href)}
                 className={`text-[10px] font-bold tracking-widest transition-colors hover:text-[#7C3AED] flex items-center gap-1 ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}
               >
                 {item.label}
@@ -144,7 +168,12 @@ export function Navbar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={(e) => {
+                        handleNavClick(e, item.href)
+                        if (!isExamActive || pathname !== '/exam') {
+                          setIsMobileMenuOpen(false)
+                        }
+                      }}
                       className={`flex items-center justify-between text-sm font-bold tracking-widest transition-colors ${pathname === item.href ? 'text-[#7C3AED]' : 'text-[#6B7280] dark:text-[#9CA3AF]'} hover:text-[#7C3AED]`}
                     >
                       {item.label}
@@ -180,6 +209,12 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      <ExamExitModal
+        isOpen={isExitModalOpen}
+        onClose={() => setIsExitModalOpen(false)}
+        onConfirm={confirmExit}
+      />
     </nav>
   )
 }

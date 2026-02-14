@@ -184,10 +184,10 @@ export default function PDFUploadZone({
               >
                 <Upload className="w-24 h-24 text-blue-400 mx-auto mb-6" />
               </motion.div>
-              <h2 className="text-4xl font-bold text-white mb-4">
+              <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">
                 Drop Your PDFs Here
               </h2>
-              <p className="text-xl text-blue-200">
+              <p className="text-base sm:text-xl text-blue-200">
                 Release to upload and start generating questions
               </p>
             </motion.div>

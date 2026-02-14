@@ -2,11 +2,13 @@
 
 import { useState, useCallback, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Flag, CheckSquare, Clock, AlertTriangle, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Flag, CheckSquare, Clock, AlertTriangle, Loader2, Brain } from 'lucide-react'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
+import { ExamExitModal } from '@/components/exam/ExamExitModal'
 import { pageVariants } from '@/lib/animations/variants'
 import { useSearchParams } from 'next/navigation'
 import BundleProgress from '@/components/bundles/BundleProgress'
+import { useExam } from '@/components/providers/ExamProvider'
 
 // Default exam settings
 const DEFAULT_EXAM_SETTINGS = {
@@ -244,6 +246,9 @@ function ExamContent() {
   const [examCompleted, setExamCompleted] = useState(false)
   const [examStartTime, setExamStartTime] = useState<number>(0)
   const [timeLeft, setTimeLeft] = useState(0)
+  const [showExitDialog, setShowExitDialog] = useState(false)
+  const [reviewMode, setReviewMode] = useState(false)
+  const { setIsExamActive } = useExam()
 
   // Fetch exam data
   useEffect(() => {
@@ -285,6 +290,37 @@ function ExamContent() {
 
     fetchExam()
   }, [examId])
+
+  // Exit warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (examStarted && !examCompleted) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [examStarted, examCompleted])
+
+  const handleExitRequest = () => {
+    if (examStarted && !examCompleted) {
+      setShowExitDialog(true)
+    } else {
+      window.location.href = '/dashboard'
+    }
+  }
+
+  const confirmExit = () => {
+    setShowExitDialog(false)
+    setIsExamActive(false)
+    window.location.href = '/dashboard'
+  }
+
+  const toggleReviewMode = () => {
+    setReviewMode(!reviewMode)
+  }
 
   const currentQuestion = exam?.questions[currentQuestionIndex]
   const answeredCount = Object.keys(userAnswers).length
@@ -339,7 +375,8 @@ function ExamContent() {
     }
 
     setExamCompleted(true)
-  }, [exam, examStartTime, userAnswers])
+    setIsExamActive(false) // No longer active once completed
+  }, [exam, examStartTime, userAnswers, setIsExamActive])
 
   // Timer effect
   useEffect(() => {
@@ -415,6 +452,7 @@ function ExamContent() {
   const handleStartExam = () => {
     setExamStartTime(Date.now())
     setExamStarted(true)
+    setIsExamActive(true)
   }
 
   // Loading state
@@ -471,7 +509,7 @@ function ExamContent() {
   if (!exam) return null
 
   // Pre-exam screen
-  if (!examStarted) {
+  if (!examStarted && !examCompleted) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <ParticleBackground />
@@ -482,29 +520,42 @@ function ExamContent() {
             animate="animate"
             className="glass rounded-2xl p-8 text-center max-w-md w-full"
           >
-            <h1 className="text-2xl font-bold gradient-text mb-4">
-              {exam.title}
-            </h1>
+            <div className="flex justify-between items-center mb-6">
+              <button onClick={() => window.location.href = '/dashboard'} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <h1 className="text-2xl font-bold gradient-text">
+                {exam.title}
+              </h1>
+              <div className="w-6" />
+            </div>
+
             {exam.description && (
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
                 {exam.description}
               </p>
             )}
-            <div className="space-y-4 text-slate-600 dark:text-slate-400 mb-8">
-              <p>Time Limit: {exam.time_limit_minutes} minutes</p>
-              <p>Questions: {exam.questions.length}</p>
-              <p>Once you start, the timer cannot be paused.</p>
-            </div>
-            {error && (
-              <div className="glass border-yellow-200 dark:border-yellow-800 bg-yellow-50/80 dark:bg-yellow-900/20 rounded-xl p-3 mb-4 text-sm text-yellow-800 dark:text-yellow-200">
-                {error}
+
+            <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 mb-8 text-left space-y-4">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                <Clock className="w-5 h-5 text-blue-500" />
+                <span className="font-medium">Time Limit: {exam.time_limit_minutes} minutes</span>
               </div>
-            )}
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                <CheckSquare className="w-5 h-5 text-green-500" />
+                <span className="font-medium">Questions: {exam.questions.length}</span>
+              </div>
+              <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400 text-sm">
+                <AlertTriangle className="w-5 h-5" />
+                <span>Timer starts immediately!</span>
+              </div>
+            </div>
+
             <button
               onClick={handleStartExam}
-              className="magnetic w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-glow transition-all duration-300"
+              className="magnetic w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-glow transition-all duration-300 shadow-lg shadow-blue-500/20"
             >
-              Start Exam
+              Start Exam Now
             </button>
           </motion.div>
         </div>
@@ -513,7 +564,7 @@ function ExamContent() {
   }
 
   // Post-exam screen
-  if (examCompleted) {
+  if (examCompleted && !reviewMode) {
     const correctAnswers = exam.questions.filter(question => {
       const userAnswer = userAnswers[question.id]
       if (question.type === 'multiple-choice' && userAnswer) {
@@ -539,19 +590,37 @@ function ExamContent() {
               <CheckSquare className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold gradient-text mb-4">
-              Exam Completed!
+              {reviewMode ? 'Exam Review' : 'Exam Completed!'}
             </h1>
             <div className="space-y-2 text-slate-600 dark:text-slate-400 mb-8">
               <p className="text-lg">Score: <span className="font-bold text-slate-900 dark:text-white">{score}%</span> ({correctAnswers}/{exam.questions.length})</p>
               <p>Questions Answered: {answeredCount} of {exam.questions.length}</p>
               <p>Questions Flagged: {flaggedCount}</p>
             </div>
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="magnetic w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-glow transition-all duration-300"
-            >
-              Return to Dashboard
-            </button>
+
+            <div className="flex flex-col gap-3">
+              {reviewMode ? (
+                <button
+                  onClick={() => setReviewMode(false)}
+                  className="magnetic w-full glass glass-hover border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 py-4 px-6 rounded-xl font-semibold transition-all duration-300"
+                >
+                  Back to Results
+                </button>
+              ) : (
+                <button
+                  onClick={() => setReviewMode(true)}
+                  className="magnetic w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-glow transition-all duration-300"
+                >
+                  Review Answers
+                </button>
+              )}
+              <button
+                onClick={() => window.location.href = '/dashboard'}
+                className="magnetic w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-glow transition-all duration-300"
+              >
+                Return to Dashboard
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -571,16 +640,27 @@ function ExamContent() {
       >
         {/* Timer and Header */}
         <div className="glass rounded-2xl p-4 mb-8 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {exam.title}
-          </h1>
-
-          <div className="flex items-center gap-2" style={{ color: getTimerColor() }}>
-            {timeLeft <= 600 ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
-            <span className="text-lg font-mono font-semibold">
-              {formatTime(timeLeft)}
-            </span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleExitRequest}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+              title="Exit Exam"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+              {exam.title} {reviewMode && '(Review)'}
+            </h1>
           </div>
+
+          {!reviewMode && (
+            <div className="flex items-center gap-2" style={{ color: getTimerColor() }}>
+              {timeLeft <= 600 ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+              <span className="text-lg font-mono font-semibold">
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-8">
@@ -624,29 +704,67 @@ function ExamContent() {
                   <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {currentQuestion.answers.map((answer, index) => {
                       const isSelected = userAnswers[currentQuestion.id] === answer.id
+                      const showCorrect = reviewMode && answer.isCorrect
+                      const showIncorrect = reviewMode && isSelected && !answer.isCorrect
+
                       return (
-                        <button
+                        <div
                           key={answer.id}
-                          onClick={() => handleAnswerSelect(currentQuestion.id, answer.id)}
-                          className={`group relative flex items-center p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 text-left ${isSelected
-                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/10'
-                            : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-white/10'
+                          className={`group relative flex items-center p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 text-left ${showCorrect
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-400'
+                            : showIncorrect
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-500 dark:border-red-400'
+                              : isSelected
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/10'
+                                : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-white/10'
                             }`}
+                          onClick={() => !reviewMode && handleAnswerSelect(currentQuestion.id, answer.id)}
+                          style={{ cursor: reviewMode ? 'default' : 'pointer' }}
                         >
-                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm md:text-base border-2 transition-colors duration-300 mr-4 shrink-0 ${isSelected
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 group-hover:border-blue-300 group-hover:text-blue-500'
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm md:text-base border-2 transition-colors duration-300 mr-4 shrink-0 ${showCorrect
+                            ? 'bg-green-500 text-white border-green-500'
+                            : showIncorrect
+                              ? 'bg-red-500 text-white border-red-500'
+                              : isSelected
+                                ? 'bg-blue-500 text-white border-blue-500'
+                                : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 group-hover:border-blue-300 group-hover:text-blue-500'
                             }`}>
                             {String.fromCharCode(65 + index)}
                           </div>
-                          <span className={`text-sm md:text-lg font-medium transition-colors duration-300 ${isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-slate-700 dark:text-slate-300'
-                            }`}>
-                            {answer.text}
-                          </span>
-                        </button>
+                          <div className="flex-1">
+                            <span className={`text-sm md:text-lg font-medium transition-colors duration-300 ${showCorrect ? 'text-green-900 dark:text-green-100' :
+                              showIncorrect ? 'text-red-900 dark:text-red-100' :
+                                isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-slate-700 dark:text-slate-300'
+                              }`}>
+                              {answer.text}
+                            </span>
+                          </div>
+                          {showCorrect && (
+                            <CheckSquare className="w-6 h-6 text-green-500 ml-2" />
+                          )}
+                          {showIncorrect && (
+                            <AlertTriangle className="w-6 h-6 text-red-500 ml-2" />
+                          )}
+                        </div>
                       )
                     })}
                   </div>
+                )}
+
+                {reviewMode && currentQuestion.explanation && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 p-6 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl"
+                  >
+                    <h4 className="flex items-center gap-2 text-blue-700 dark:text-blue-300 font-bold mb-2">
+                      <Brain className="w-5 h-5" />
+                      Explanation
+                    </h4>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                      {currentQuestion.explanation}
+                    </p>
+                  </motion.div>
                 )}
 
                 {/* Only multiple-choice questions are supported */}
@@ -668,10 +786,13 @@ function ExamContent() {
               </button>
 
               <button
-                onClick={handleExamComplete}
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-green-500/20 active:scale-95"
+                onClick={reviewMode ? () => setReviewMode(false) : handleExamComplete}
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg active:scale-95 ${reviewMode
+                  ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-500/20'
+                  : 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20'
+                  }`}
               >
-                SUBMIT EXAM
+                {reviewMode ? 'EXIT REVIEW' : 'SUBMIT EXAM'}
               </button>
 
               <button
@@ -775,6 +896,12 @@ function ExamContent() {
           </div>
         </div>
       </motion.div>
+
+      <ExamExitModal
+        isOpen={showExitDialog}
+        onClose={() => setShowExitDialog(false)}
+        onConfirm={confirmExit}
+      />
     </div>
   )
 }

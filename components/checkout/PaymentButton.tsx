@@ -38,8 +38,9 @@ export const PaymentButton = ({ config, onSuccess, onClose, verifying, amount, d
         }
 
         const PaystackPop = (window as any).PaystackPop
-        if (!PaystackPop) {
-            console.error('PaystackPop is not available on window')
+        if (!config.publicKey) {
+            console.error('Paystack Public Key is missing')
+            alert('Payment configuration error: Public Key missing')
             return
         }
 

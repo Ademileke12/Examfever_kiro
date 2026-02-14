@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
       throw new Error(examQuestionsError.message)
     }
 
-    // Increment usage counter after successful exam creation
-    await incrementUsage('exam')
+    // Increment usage counter after successful exam creation will now happen on submission
+    // await incrementUsage('exam')
 
     return NextResponse.json({
       success: true,

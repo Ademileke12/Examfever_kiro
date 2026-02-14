@@ -62,7 +62,7 @@ export function getRateLimitConfig(pathname: string) {
     if (pathname.startsWith('/api/auth')) {
         return {
             limiter: authRateLimiter,
-            limit: 10,       // 10 attempts
+            limit: 20,       // Increased from 10
             windowMs: 60000  // per minute
         }
     }
@@ -70,14 +70,14 @@ export function getRateLimitConfig(pathname: string) {
     if (pathname.startsWith('/api/ai') || pathname.startsWith('/api/pdf')) {
         return {
             limiter: expensiveApiRateLimiter,
-            limit: 5,        // 5 expensive operations
+            limit: 30,       // Increased from 5 to allow for multiple PDF/AI retries
             windowMs: 60000  // per minute
         }
     }
 
     return {
         limiter: generalApiRateLimiter,
-        limit: 10,       // 10 requests (optimized for test stability)
+        limit: 100,      // Increased from 10 for normal dashboard/exam navigation
         windowMs: 60000  // per minute
     }
 }

@@ -79,6 +79,11 @@ function CheckoutContent() {
     const selectedItem: PurchaseItem | null = (plan && PLANS[plan]) || (addon && ADDONS[addon]) || null
 
     useEffect(() => {
+        if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+            console.error('PAYSTACK_PUBLIC_KEY is missing')
+            setError('Payment gateway configuration is missing. Please contact support.')
+        }
+
         if (!selectedItem) {
             router.push('/subscription')
             return
@@ -86,11 +91,24 @@ function CheckoutContent() {
 
         const getUserEmail = async () => {
             const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user?.email) {
-                setEmail(user.email)
+            try {
+                // Use getSession first as it's faster, fallback to getUser for security
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session?.user?.email) {
+                    setEmail(session.user.email)
+                    setLoading(false)
+                } else {
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (user?.email) {
+                        setEmail(user.email)
+                    }
+                    setLoading(false)
+                }
+            } catch (err) {
+                console.error('Error fetching user:', err)
+                setError('Failed to load user session. Please try logging in again.')
+                setLoading(false)
             }
-            setLoading(false)
         }
         getUserEmail()
     }, [selectedItem, router])
@@ -106,7 +124,18 @@ function CheckoutContent() {
 
     const PaymentButton = dynamic(
         () => import('@/components/checkout/PaymentButton').then((mod) => mod.PaymentButton),
-        { ssr: false }
+        {
+            ssr: false,
+            loading: () => (
+                <button
+                    disabled
+                    className="w-full bg-primary/20 text-primary/50 font-bold py-4 rounded-xl flex items-center justify-center gap-2 cursor-wait"
+                >
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Initializing Payment...
+                </button>
+            )
+        }
     )
 
     const onSuccess = async (reference: any) => {
@@ -145,8 +174,11 @@ function CheckoutContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-readable-muted font-medium animate-pulse">Preparing secure checkout...</p>
+                </div>
             </div>
         )
     }
