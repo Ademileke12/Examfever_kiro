@@ -23,63 +23,88 @@ const EDUCATIONAL_SENTENCES = [
 export default function SpeedTypeGame() {
     const [targetSentence, setTargetSentence] = useState("")
     const [userInput, setUserInput] = useState("")
-    const [startTime, setStartTime] = useState<number | null>(null)
-    const [endTime, setEndTime] = useState<number | null>(null)
-    const [wpm, setWpm] = useState(0)
-    const [accuracy, setAccuracy] = useState(100)
+    const [timeLeft, setTimeLeft] = useState(60)
+    const [isActive, setIsActive] = useState(false)
     const [isFinished, setIsFinished] = useState(false)
-    const [errors, setErrors] = useState(0)
+    const [totalCorrectChars, setTotalCorrectChars] = useState(0)
+    const [totalTypedChars, setTotalTypedChars] = useState(0)
+    const [score, setScore] = useState(0)
+    const [accuracy, setAccuracy] = useState(100)
+    const [wpm, setWpm] = useState(0)
     const inputRef = useRef<HTMLInputElement>(null)
 
     const startNewGame = useCallback(() => {
         const randomSentence = EDUCATIONAL_SENTENCES[Math.floor(Math.random() * EDUCATIONAL_SENTENCES.length)] || ""
         setTargetSentence(randomSentence)
         setUserInput("")
-        setStartTime(null)
-        setEndTime(null)
-        setWpm(0)
-        setAccuracy(100)
+        setTimeLeft(60)
+        setIsActive(false)
         setIsFinished(false)
-        setErrors(0)
+        setTotalCorrectChars(0)
+        setTotalTypedChars(0)
+        setScore(0)
+        setAccuracy(100)
+        setWpm(0)
         setTimeout(() => inputRef.current?.focus(), 100)
+    }, [])
+
+    const nextSentence = useCallback(() => {
+        const randomSentence = EDUCATIONAL_SENTENCES[Math.floor(Math.random() * EDUCATIONAL_SENTENCES.length)] || ""
+        setTargetSentence(randomSentence)
+        setUserInput("")
+        setTimeout(() => inputRef.current?.focus(), 10)
     }, [])
 
     useEffect(() => {
         startNewGame()
     }, [startNewGame])
 
+    useEffect(() => {
+        let interval: any
+        if (isActive && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft((prev) => prev - 1)
+            }, 1000)
+        } else if (timeLeft === 0 && isActive) {
+            setIsActive(false)
+            setIsFinished(true)
+        }
+        return () => clearInterval(interval)
+    }, [isActive, timeLeft])
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value
         if (isFinished) return
 
-        if (!startTime) {
-            setStartTime(Date.now())
+        if (!isActive && val.length > 0) {
+            setIsActive(true)
         }
 
         setUserInput(val)
 
-        // Calculate errors
-        let errorCount = 0
-        for (let i = 0; i < val.length; i++) {
-            if (val[i] !== targetSentence[i]) {
-                errorCount++
-            }
+        // Calculate stats for the entire session
+        const newTotalTyped = totalTypedChars + 1
+        setTotalTypedChars(newTotalTyped)
+
+        if (val[val.length - 1] === targetSentence[val.length - 1]) {
+            setTotalCorrectChars(prev => prev + 1)
         }
-        setErrors(errorCount)
 
         // Calculate accuracy
-        const currentAccuracy = Math.max(0, Math.round(((val.length - errorCount) / Math.max(1, val.length)) * 100))
+        const currentAccuracy = Math.round((totalCorrectChars / Math.max(1, totalTypedChars)) * 100)
         setAccuracy(currentAccuracy)
 
-        // Check if finished
-        if (val === targetSentence) {
-            const now = Date.now()
-            setEndTime(now)
-            setIsFinished(true)
+        // Calculate WPM (5 chars = 1 word)
+        const timeElapsed = (60 - timeLeft) / 60
+        if (timeElapsed > 0) {
+            const currentWpm = Math.round((totalCorrectChars / 5) / timeElapsed)
+            setWpm(currentWpm)
+        }
 
-            const timeInMinutes = (now - startTime!) / 60000
-            const words = targetSentence.split(" ").length
-            setWpm(Math.round(words / timeInMinutes))
+        // Check if current sentence is finished
+        if (val === targetSentence) {
+            setScore(prev => prev + targetSentence.split(' ').length * 10)
+            nextSentence()
         }
     }
 
@@ -106,30 +131,26 @@ export default function SpeedTypeGame() {
                                 </div>
                                 <h1 className="text-3xl font-black text-readable">Speed Type</h1>
                             </div>
-                            <p className="text-readable-muted">Type the sentence exactly as shown to test your speed.</p>
+                            <p className="text-readable-muted">Type as many sentences as possible in 60 seconds.</p>
                         </div>
 
                         <div className="flex gap-4">
-                            <div className="glass px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-center">
-                                <span className="text-[10px] font-bold text-readable-muted uppercase tracking-widest">Accuracy</span>
-                                <span className={`text-xl font-black ${accuracy < 90 ? 'text-amber-500' : 'text-green-500'}`}>{accuracy}%</span>
+                            <div className="glass px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-center min-w-[100px]">
+                                <span className="text-[10px] font-bold text-readable-muted uppercase tracking-widest">Time Left</span>
+                                <span className={`text-xl font-black ${timeLeft < 10 && isActive ? 'text-red-500 animate-pulse' : 'text-readable'}`}>
+                                    {timeLeft}s
+                                </span>
                             </div>
-                            {isFinished && (
-                                <motion.div
-                                    initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="glass px-6 py-3 rounded-2xl border border-primary/30 flex flex-col items-center bg-primary/5"
-                                >
-                                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Speed (WPM)</span>
-                                    <span className="text-xl font-black text-primary">{wpm}</span>
-                                </motion.div>
-                            )}
+                            <div className="glass px-6 py-3 rounded-2xl border border-primary/30 flex flex-col items-center min-w-[100px] bg-primary/5">
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">WPM</span>
+                                <span className="text-xl font-black text-primary">{wpm}</span>
+                            </div>
                         </div>
                     </div>
 
                     {/* Game Area */}
                     <div className="relative glass rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl mb-8">
-                        <div className="relative mb-12 min-h-[120px] flex items-center justify-center">
+                        <div className="relative mb-8 min-h-[140px] flex items-center justify-center">
                             <p className="text-xl md:text-2xl font-medium leading-relaxed text-readable tracking-wide text-center">
                                 {targetSentence.split("").map((char, i) => {
                                     let color = "text-readable-muted"
@@ -153,23 +174,10 @@ export default function SpeedTypeGame() {
                                 onChange={handleInputChange}
                                 disabled={isFinished}
                                 className="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-5 text-xl text-readable focus:outline-none focus:border-primary/50 transition-all text-center placeholder:text-readable-muted/30"
-                                placeholder={!startTime ? "Start typing to begin..." : ""}
+                                placeholder={!isActive && !isFinished ? "Start typing to begin..." : ""}
                                 spellCheck={false}
                                 autoComplete="off"
                             />
-
-                            {isFinished && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-2xl flex items-center justify-center"
-                                >
-                                    <div className="text-center">
-                                        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                                        <p className="font-bold text-readable text-lg">Great job!</p>
-                                    </div>
-                                </motion.div>
-                            )}
                         </div>
                     </div>
 
