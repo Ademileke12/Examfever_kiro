@@ -71,11 +71,15 @@ export default function FormulaMatchGame() {
     }, [initializeGame])
 
     const handleCardClick = (index: number) => {
-        if (flippedCards.length === 2 || cards[index].isFlipped || cards[index].isMatched) return
+        const card = cards[index]
+        if (!card || flippedCards.length === 2 || card.isFlipped || card.isMatched) return
 
         const newCards = [...cards]
-        newCards[index].isFlipped = true
-        setCards(newCards)
+        const targetCard = newCards[index]
+        if (targetCard) {
+            targetCard.isFlipped = true
+            setCards(newCards)
+        }
 
         const newFlipped = [...flippedCards, index]
         setFlippedCards(newFlipped)
