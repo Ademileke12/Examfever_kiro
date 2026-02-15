@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Gamepad2, Timer, Brain, Keyboard, Trophy, Lock, BookOpen, HelpCircle } from 'lucide-react'
+import { Gamepad2, Timer, Brain, Keyboard, Trophy, Lock, BookOpen, HelpCircle, Cpu } from 'lucide-react'
 import { ParticleBackground } from '@/components/ui/ParticleBackground'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
@@ -18,6 +18,14 @@ interface Game {
 }
 
 const games: Game[] = [
+    {
+        id: 'chess',
+        title: 'Chess Strategy',
+        description: 'Master the board with advanced tactical maneuvers against a medium-level AI.',
+        icon: <Cpu className="w-8 h-8" />,
+        color: 'from-slate-600 to-slate-800',
+        ready: true
+    },
     {
         id: 'speed-type',
         title: 'Speed Type',
