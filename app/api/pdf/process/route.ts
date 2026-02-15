@@ -22,27 +22,44 @@ function calculateDifficultyDistribution(questions: any[]): Record<string, numbe
 // Helper function to extract course metadata from filename and content
 function extractCourseMetadata(filename: string, content: string) {
   const cleanFilename = filename.replace(/\.[^/.]+$/, '')
+  const first1k = content.substring(0, 1000)
 
   const subjectPatterns = {
-    'mathematics': /math|calculus|algebra|geometry|statistics|trigonometry/i,
-    'chemistry': /chemistry|chemical|organic|inorganic|biochemistry/i,
-    'physics': /physics|mechanics|thermodynamics|quantum|electromagnetism/i,
-    'biology': /biology|anatomy|physiology|genetics|ecology|botany/i,
-    'computer_science': /computer|programming|algorithm|software|coding|javascript|python|java/i,
-    'history': /history|historical|ancient|medieval|modern|civilization/i,
-    'literature': /literature|english|writing|poetry|novel|shakespeare/i,
-    'economics': /economics|economic|finance|business|accounting|marketing/i,
-    'psychology': /psychology|psychological|cognitive|behavioral|mental/i,
-    'engineering': /engineering|mechanical|electrical|civil|structural/i
+    'mathematics': /math|calculus|algebra|geometry|statistics|trigonometry|arithmetic|mat1|mat2/i,
+    'biology': /biology|anatomy|physiology|genetics|ecology|botany|bio\s|cell|molecular|zoology|microbiology|nursing|medical|medicine/i,
+    'chemistry': /chemistry|chemical|organic|inorganic|biochemistry|chm\s/i,
+    'physics': /physics|mechanics|thermodynamics|quantum|electromagnetism|phy\s/i,
+    'computer_science': /computer|programming|algorithm|software|coding|javascript|python|java|cs\d/i,
+    'history': /history|historical|ancient|medieval|modern|civilization|his\s/i,
+    'literature': /literature|english|writing|poetry|novel|shakespeare|lit\s/i,
+    'economics': /economics|economic|finance|business|accounting|marketing|eco\s/i,
+    'psychology': /psychology|psychological|cognitive|behavioral|mental|psy\s/i,
+    'engineering': /engineering|mechanical|electrical|civil|structural|engr/i
   }
 
   let subjectTag = 'general'
   let courseId = cleanFilename.toLowerCase().replace(/[^a-z0-9]/g, '_')
 
-  for (const [subject, pattern] of Object.entries(subjectPatterns)) {
-    if (pattern.test(filename) || pattern.test(content.substring(0, 1000))) {
-      subjectTag = subject
-      break
+  // Priority 1: Check filename prefix (e.g., BIO 201)
+  const upperFilename = filename.toUpperCase()
+  if (upperFilename.startsWith('BIO')) subjectTag = 'biology'
+  else if (upperFilename.startsWith('CHM') || upperFilename.startsWith('CHE')) subjectTag = 'chemistry'
+  else if (upperFilename.startsWith('PHY')) subjectTag = 'physics'
+  else if (upperFilename.startsWith('MAT') || upperFilename.startsWith('MTH')) subjectTag = 'mathematics'
+  else if (upperFilename.startsWith('ECN') || upperFilename.startsWith('ECO')) subjectTag = 'economics'
+  else if (upperFilename.startsWith('PSY')) subjectTag = 'psychology'
+  else if (upperFilename.startsWith('CSC') || upperFilename.startsWith('CMP')) subjectTag = 'computer_science'
+  else if (upperFilename.startsWith('ENG')) subjectTag = 'engineering'
+  else if (upperFilename.startsWith('HIS')) subjectTag = 'history'
+  else if (upperFilename.startsWith('LIT')) subjectTag = 'literature'
+
+  // Priority 2: Pattern match if not caught by prefix
+  if (subjectTag === 'general') {
+    for (const [subject, pattern] of Object.entries(subjectPatterns)) {
+      if (pattern.test(filename) || pattern.test(first1k)) {
+        subjectTag = subject
+        break
+      }
     }
   }
 

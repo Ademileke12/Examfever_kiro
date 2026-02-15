@@ -22,6 +22,7 @@ interface SubscriptionContextType {
     closeModal: () => void
     refetchStatus: () => Promise<void>
     checkLimit: (type: 'upload' | 'exam') => boolean
+    isPaid: boolean
     error: string | null
 }
 
@@ -108,6 +109,7 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
                 closeModal: () => setIsModalOpen(false),
                 refetchStatus: fetchStatus,
                 checkLimit,
+                isPaid: subscription ? subscription.plan_tier !== 'free' : false,
                 error
             }}
         >

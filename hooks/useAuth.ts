@@ -48,13 +48,17 @@ export function useAuth(): AuthContextType {
   const signUp = async (credentials: RegisterCredentials & { referralCode: string | undefined }) => {
     setLoading(true)
 
+    const redirectTo = typeof window !== 'undefined'
+      ? `${window.location.origin}/api/auth/callback`
+      : process.env.NEXT_PUBLIC_SITE_URL
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`
+        : 'https://examfever-kiro.vercel.app/api/auth/callback'
+
     const { error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
       options: {
-        emailRedirectTo: typeof window !== 'undefined'
-          ? `${window.location.origin}/api/auth/callback`
-          : 'https://examfever-kiro.vercel.app/api/auth/callback',
+        emailRedirectTo: redirectTo,
         data: {
           referred_by: credentials.referralCode
         }

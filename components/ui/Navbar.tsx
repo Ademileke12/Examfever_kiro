@@ -54,6 +54,7 @@ export function Navbar() {
     { href: '/browse', label: 'MY EXAMS', requireAuth: false },
     { href: '/questions', label: 'QUESTIONS', requireAuth: false },
     { href: '/upload', label: 'UPLOAD PDF', requireAuth: false },
+    { href: '/games', label: 'GAMES', requireAuth: true },
     { href: '/analytics', label: 'ANALYTICS', requireAuth: true },
     { href: '/affiliate', label: 'EARN', requireAuth: true },
     { href: '/store', label: 'STORE', requireAuth: true },
